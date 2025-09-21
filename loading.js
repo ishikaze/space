@@ -15,4 +15,5 @@ function closeLoading() {
     playTrack(newTrack.name, newTrack.artist, newTrack.url, newTrack.startTimestamp);
     trackFadeIn()
     showMusicController()
+    welcomeMessage()
 }

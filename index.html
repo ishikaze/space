@@ -6,13 +6,13 @@
     <link rel="stylesheet" href="styles.css">
     <title>space</title>
 </head>
-<body onload="welcomeMessage()">
+<body>
     <div id="loading-page" onclick="closeLoading()">
-        <h1>Loading...</h1>
+        <h1 id="loading-header">Loading...</h1>
         <p id="loading-status"></p>
     </div>
     <p id='debug'>
-        **THIS IS A WIP**
+        > welcome
     </p>
 
     <svg>
@@ -90,11 +90,26 @@
     <script src="./dialogue.js"></script>
     <script>
         function welcomeMessage() {
-            log("hi!!!!!");
-            log("thanks for checking out my project :3");
-            log("i just added a bunch of night and late night music!");
-            log("use the time override buttons in the music controller to test it out!");
-            log("(its in the bottom left corner, you need to hover over to see it)");
+            setTimeout(async () => {
+                log("")
+                log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
+                log("")
+                await sleep(500);
+                log("hi!!!!!"); 
+                await sleep(2000);
+                log("thanks for checking out my project :3"); 
+                await sleep(4000);
+                log("i just added a bunch of night and late night music!"); 
+                await sleep(4000);
+                log("use the time override buttons in the music controller to listen to music from different times of day!"); 
+                await sleep(2000);
+                log("(its in the bottom left corner or bottom on mobile, you need to hover over or click on mobile to see it)"); 
+                await sleep(500);
+                log("")
+                log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
+                log("")
+            }, 3000);
+            
         }
     </script>
     <!-- <script src="./ShaderProgram.js"></script>

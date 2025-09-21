@@ -405,6 +405,8 @@ updateLoadingStatus('Preloading music...');
 preloadAudio(newTrack.url);
 
 updateLoadingStatus('Click to continue');
+const loadingHeader = document.getElementById('loading-header');
+loadingHeader.innerHTML = 'Loaded!';
 loadingFinished = true; 
 
 //controller logic
