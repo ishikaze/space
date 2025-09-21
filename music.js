@@ -375,6 +375,7 @@ function log(message) {
     logTimeout = setTimeout(() => {
         debugPanel.style.opacity = 0;
     }, 10000);
+    debugPanel.scrollTo(0, debugPanel.scrollHeight);
 }
 
 function showMusicController() {

@@ -26,6 +26,8 @@ body, html {
     z-index: 1000;
     opacity: 0;
     transition: all 0.5s ease-in-out;
+    max-height: 100vh;
+    overflow-y: scroll;
 }
 
 #music-controller {
