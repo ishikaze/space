@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="styles.css">
     <title>space</title>
 </head>
-<body>
+<body onload="welcomeMessage()">
     <div id="loading-page" onclick="closeLoading()">
         <h1>Loading...</h1>
         <p id="loading-status"></p>
@@ -88,6 +88,15 @@
     <script src="./waves.js"></script>
     <script src="./liquid.js"></script>
     <script src="./dialogue.js"></script>
+    <script>
+        function welcomeMessage() {
+            log("hi!!!!!");
+            log("thanks for checking out my project :3");
+            log("i just added a bunch of night and late night music!");
+            log("use the time override buttons in the music controller to test it out!");
+            log("(its in the bottom left corner, you need to hover over to see it)");
+        }
+    </script>
     <!-- <script src="./ShaderProgram.js"></script>
      <script src="./partWaves.js"></script>
      <script src="./lines.js"></script> -->
