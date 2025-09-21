@@ -29,7 +29,7 @@ function setTimeOverride(override) {
             timeOverride = 'lateNight';
             break;
         case 0:
-            timeOverride = 'off';
+            timeOverride = undefined;
             break;
     }
     log(`Time override set to: ${timeOverride}`);
