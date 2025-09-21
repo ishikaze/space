@@ -4,6 +4,14 @@
     box-sizing: border-box;
 }
 
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: '', sans-serif;
+    background-color: #000000;
+}
+
 #debug {
     position: fixed;
     bottom: 0;
@@ -14,15 +22,19 @@
     font-family: Arial, sans-serif;
     font-size: 14px;
     z-index: 1000;
+    opacity: 0;
+    transition: all 0.5s ease-in-out;
 }
 
 #music-controller {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
+    bottom: 0;
+    left: 0;
+    padding: 1em;
     z-index: 1000;
     background-color: rgba(0,0,0,0.5);
     color: white;
+    transition: all 0.5s ease-in-out;
 }
 
 #loading-page {
@@ -55,15 +67,89 @@
 }
 
 #main-container {
-    background-color: #060b18;
-    animation: hueShift 120s linear infinite;
+  background-color: #060b18;
+  animation: hueShift 120s linear infinite;
+}
 
 #canvas{
+  width: 100vw;
+  height: 100vh;
     margin:0 auto;
     display:block;
     filter:url('#shadowed-goo');
 }
 
+.float-text {
+  position: relative;
+  display: inline-block;
+  /* No left/right/top/bottom set, so it stays in flow */
+}
+
+#selection-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 20px;
+  z-index: 10;
+  background-color: #00000000;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-direction: column;
+  padding: 5em;
+  overflow: hidden;
+}
+
+#dialogue {
+  color: rgb(255, 255, 255);
+  font-family: 'Arial', sans-serif;
+  font-size: 8em;
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+  filter:url('#shadowed-goo');
+  opacity: 1;
+  transition: all 0.5s ease-in-out;
+}
+
+.selection {
+  font-size: 80px; 
+  color: #FFF;
+  background-color: #00000000;
+  opacity: 1;
+  filter: blur(16px) contrast(20);
+  transition: filter 1.2s, opacity .3s;
+  position: relative;
+}
+
+.selection:hover {
+  opacity: 1;
+  filter: blur(0) contrast(1);
+}
+
 svg{
   display:none;
 }
+
+/* html, body { height: 100%; }
+body { margin: 0; background: #000; }
+canvas { display: block; }
+
+.waves { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 2;}
+
+svg {
+  height: 100vh;
+  width: 100vw;
+}
+
+path {
+  fill: none;
+  stroke: #172b5f6e;
+  stroke-width: 0.5px;
+  z-index: 1;
+} */

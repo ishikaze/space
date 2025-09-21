@@ -6,6 +6,34 @@ let hour
 let minute
 let newTrack
 let preloaded = false;
+let timeOverride
+
+function setTimeOverride(override) {
+    switch (override) {
+        case 1:
+            timeOverride = 'earlyMorning';
+            break;
+        case 2:
+            timeOverride = 'morning';
+            break;
+        case 3:
+            timeOverride = 'afternoon';
+            break;
+        case 4:
+            timeOverride = 'evening';
+            break;
+        case 5:
+            timeOverride = 'night';
+            break;
+        case 6:
+            timeOverride = 'lateNight';
+            break;
+        case 0:
+            timeOverride = 'off';
+            break;
+    }
+    log(`Time override set to: ${timeOverride}`);
+}
 
 const sleep = (milliseconds) => {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -45,13 +73,13 @@ const tracks = {
                 name: "aer",
                 artist: "Wisp X",
                 url: "./assets/music/default/aer.mp3",
-                startTimestamp: 0
+                startTimestamp: 73
             },
             {
                 name: "Planet Express",
                 artist: "Ujico*",
                 url: "./assets/music/default/planetExpress.mp3",
-                startTimestamp: 0
+                startTimestamp: 112.5
             }
         ],
         afternoon: [
@@ -90,30 +118,126 @@ const tracks = {
         ],
         night: [
             {
-                name: "Paradise Ⅱ",
-                artist: "Sound Souler",
-                url: "./assets/music/default/paradise2.mp3",
+                name: "Main Theme (From Konatsu and Hiyori)",
+                artist: "Akira Kosemura",
+                url: "./assets/music/default/mainTheme.mp3",
+                startTimestamp: 23
+            },
+            {
+                name: "Guardian of the Memory (Instrumental)",
+                artist: "Honor of Kings",
+                url: "./assets/music/default/guardianOfTheMemory.mp3",
+                startTimestamp: 56
+            },
+            {
+                name: "Lullaby of the Sea (Instrumental)",
+                artist: "Honor of Kings",
+                url: "./assets/music/default/lullabyOfTheSea.mp3",
+                startTimestamp: 2
+            },
+            {
+                name: "Ataraxia",
+                artist: "Pretty Patterns",
+                url: "./assets/music/default/ataraxia.mp3",
                 startTimestamp: 0
             },
             {
-                name: "aer",
-                artist: "Wisp X",
-                url: "./assets/music/default/aer.mp3",
+                name: "BLUESTAR",
+                artist: "Pretty Patterns and TOFIE",
+                url: "./assets/music/default/bluestar.mp3",
+                startTimestamp: 67
+            },
+            {
+                name: "PROXIMA",
+                artist: "Pretty Patterns, Kazari Tayu and Enna Alouette",
+                url: "./assets/music/default/proxima.mp3",
                 startTimestamp: 0
+            },
+            {
+                name: "Past Reflection",
+                artist: "",
+                url: "./assets/music/default/pastReflection.mp3",
+                startTimestamp: 66.3
+            },
+            {
+                name: "The Frosty Maple",
+                artist: "",
+                url: "./assets/music/default/theFrostyMaple.mp3",
+                startTimestamp: 122
+            },
+            {
+                name: "我的纸飞机 (女版伴奏)",
+                artist: "",
+                url: "./assets/music/default/myPaperPlane.mp3",
+                startTimestamp: 143
+            },
+            {
+                name: "Rakuen",
+                artist: "ミツキヨ",
+                url: "./assets/music/default/rakuen.mp3",
+                startTimestamp: 35.5
             }
         ],
         lateNight: [
             {
-                name: "Paradise Ⅱ",
-                artist: "Sound Souler",
-                url: "./assets/music/default/paradise2.mp3",
+                name: "Main Theme (From Konatsu and Hiyori)",
+                artist: "Akira Kosemura",
+                url: "./assets/music/default/mainTheme.mp3",
+                startTimestamp: 23
+            },
+            {
+                name: "Guardian of the Memory (Instrumental)",
+                artist: "Honor of Kings",
+                url: "./assets/music/default/guardianOfTheMemory.mp3",
+                startTimestamp: 56
+            },
+            {
+                name: "Lullaby of the Sea (Instrumental)",
+                artist: "Honor of Kings",
+                url: "./assets/music/default/lullabyOfTheSea.mp3",
+                startTimestamp: 2
+            },
+            {
+                name: "Ataraxia",
+                artist: "Pretty Patterns",
+                url: "./assets/music/default/ataraxia.mp3",
                 startTimestamp: 0
             },
             {
-                name: "aer",
-                artist: "Wisp X",
-                url: "./assets/music/default/aer.mp3",
+                name: "BLUESTAR",
+                artist: "Pretty Patterns and TOFIE",
+                url: "./assets/music/default/bluestar.mp3",
+                startTimestamp: 67
+            },
+            {
+                name: "PROXIMA",
+                artist: "Pretty Patterns, Kazari Tayu and Enna Alouette",
+                url: "./assets/music/default/proxima.mp3",
                 startTimestamp: 0
+            },
+            {
+                name: "Past Reflection",
+                artist: "",
+                url: "./assets/music/default/pastReflection.mp3",
+                startTimestamp: 66.3
+            },
+            {
+                name: "The Frosty Maple",
+                artist: "",
+                url: "./assets/music/default/theFrostyMaple.mp3",
+                startTimestamp: 122
+            },
+            {
+                name: "我的纸飞机 (女版伴奏)",
+                artist: "",
+                url: "./assets/music/default/myPaperPlane.mp3",
+                startTimestamp: 143
+            },
+            {
+                name: "Rakuen",
+                artist: "ミツキヨ",
+                url: "./assets/music/default/rakuen.mp3",
+                startTimestamp: 35.5
             }
         ]
     },
@@ -198,21 +322,32 @@ function getNewTrack() {
     log(`time is ${hour}:${minute}, month is ${month}, day is ${day}`);
 
     let timeOfDay;
-    if (hour >= 5 && hour < 8) {
-        timeOfDay = 'earlyMorning';
-    } else if (hour >= 8 && hour < 12) {
-        timeOfDay = 'morning';
-    } else if (hour >= 12 && hour < 17) {
-        timeOfDay = 'afternoon';
-    } else if (hour >= 17 && hour < 21) {
-        timeOfDay = 'evening';
-    } else if (hour >= 21 && hour < 24) {
-        timeOfDay = 'night';
+    if (timeOverride !== undefined) {
+        log(`time override detected! (${timeOverride})`);
+        timeOfDay = timeOverride;
     } else {
-        timeOfDay = 'lateNight';
+        switch (true) {
+            case (hour >= 5 && hour < 8):
+                timeOfDay = 'earlyMorning';
+                break;
+            case (hour >= 8 && hour < 12):
+                timeOfDay = 'morning';
+                break;
+            case (hour >= 12 && hour < 17):
+                timeOfDay = 'afternoon';
+                break;
+            case (hour >= 17 && hour < 21):
+                timeOfDay = 'evening';
+                break;
+            case (hour >= 21 && hour < 24):
+                timeOfDay = 'night';
+                break;
+            default:
+                timeOfDay = 'lateNight';
+                break;
+        }
     }
-
-    log(`Time of day determined: ${timeOfDay}`);
+    log(`time of day determined: ${timeOfDay}`);
 
     const trackList = useTrackList[timeOfDay];
     const randomIndex = Math.floor(Math.random() * trackList.length);
@@ -231,8 +366,30 @@ async function playTrack(name, artist, url, timestamp) {
     player.play();
 }
 
+let logTimeout;
+
 function log(message) {
     debugPanel.innerHTML += `<br>> ${message}`;
+    debugPanel.style.opacity = 1;
+    if (logTimeout) clearTimeout(logTimeout);
+    logTimeout = setTimeout(() => {
+        debugPanel.style.opacity = 0;
+    }, 10000);
+}
+
+function showMusicController() {
+    const controller = document.getElementById('music-controller');
+    controller.style.opacity = 1;
+}
+
+let controllerTimeout;
+
+function hideMusicController() {
+    const controller = document.getElementById('music-controller');
+    if (controllerTimeout) clearTimeout(controllerTimeout);
+    controllerTimeout = setTimeout(() => {
+        controller.style.opacity = 0;
+    }, 3000);
 }
 
 updateLoadingStatus('Music module loaded.');
@@ -318,3 +475,5 @@ async function trackFadeIn() {
         await sleep(35)
     }
 }
+
+hideMusicController()

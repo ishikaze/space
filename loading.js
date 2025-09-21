@@ -14,4 +14,5 @@ function closeLoading() {
     loadingPage.style.display = 'none';
     playTrack(newTrack.name, newTrack.artist, newTrack.url, newTrack.startTimestamp);
     trackFadeIn()
+    showMusicController()
 }
