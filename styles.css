@@ -28,6 +28,7 @@ body, html {
     transition: all 0.5s ease-in-out;
     max-height: 100vh;
     overflow-y: scroll;
+    pointer-events: none;
 }
 
 #music-controller {
@@ -203,5 +204,6 @@ path {
     transition: all 0.5s ease-in-out;
     max-height: 30vh;
     overflow-y: scroll;
+    pointer-events: none;
   }
 }
