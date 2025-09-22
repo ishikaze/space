@@ -313,6 +313,7 @@ function preloadAudio(url) {
   });
 }
 
+let timeOfDay;
 function getNewTrack() {
     let useTrackList = tracks.default;
     if (month === 1 && day >= 15 && day <= 30) {
@@ -321,7 +322,6 @@ function getNewTrack() {
 
     log(`time is ${hour}:${minute}, month is ${month}, day is ${day}`);
 
-    let timeOfDay;
     if (timeOverride !== undefined) {
         log(`time override detected! (${timeOverride})`);
         timeOfDay = timeOverride;

@@ -1,4 +1,5 @@
 let loadingFinished = false;
+let loadMinValue = 0
 
 function updateLoadingStatus(message) {
     const loadingStatus = document.getElementById('loading-status');
@@ -8,8 +9,12 @@ function updateLoadingStatus(message) {
 updateLoadingStatus('Initializing...');
 
 async function loadMin() {
+    
     for (let i = 0; i < 100; i++) {
-        randomTime = Math.random() * 100
+        if (loadMinValue === 0) {
+            i = 100
+        }
+        randomTime = Math.random() * loadMinValue
         updateLoadingStatus(`Loading... ${i + 1}%`);
         await sleep(randomTime)
     }
@@ -28,5 +33,7 @@ function closeLoading() {
     playTrack(newTrack.name, newTrack.artist, newTrack.url, newTrack.startTimestamp);
     trackFadeIn()
     showMusicController()
+    hideMusicController()
     welcomeMessage()
+    playDialogue("welcome")
 }

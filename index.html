@@ -12,7 +12,7 @@
         <p id="loading-status"></p>
     </div>
     <p id='debug'>
-        > welcome
+        > Welcome
     </p>
 
     <svg>
@@ -43,17 +43,13 @@
             </filter>
             </defs>
         </svg>
-    
-    <script src="script.js"></script>
 
     <div id="main-container">
         <canvas id="canvas">Your browser doesn't support canvas</canvas>
 
         <div id="selection-container"> 
-            <h1 id="dialogue" class="float-text" style="filter: url(#liquid-filter);">Welcome</h1>
-            <!-- <p class="selection float-text" style="filter: url(#liquid-filter);">Selection</p>
-            <p class="selection float-text" style="filter: url(#liquid-filter);">Selection</p>
-            <p class="selection float-text" style="filter: url(#liquid-filter);">Selection</p> -->
+            <h1 id="dialogue" class="float-text" style="filter: url(#liquid-filter);"></h1>
+            <p class="float-text selection" style="filter: url(#liquid-filter);" onclick="hideDialogue()">Hide this dialogue</p>
         </div>
         
 
