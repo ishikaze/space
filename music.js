@@ -611,10 +611,18 @@ player.addEventListener('timeupdate', async () => {
         // Ensure there's a next track to preload
         if (playlist.length > 1) { // We need at least 2 tracks: current and next
             let nextTrack = playlist[1];
+            seekSlider.style.pointerEvents = 'none'
+            seekSlider.style.opacity = '0.5'
+            playPauseBtn.style.pointerEvents = 'none'
+            playPauseBtn.style.opacity = '0.5'
             log(`Preloading next track: ${nextTrack.name}`);
             
             await preloadAudio(nextTrack.url).then(() => {
                 log(`Successfully preloaded: ${nextTrack.name}`);
+                seekSlider.style.pointerEvents = 'auto'
+                seekSlider.style.opacity = '1'
+                playPauseBtn.style.pointerEvents = 'auto'
+                playPauseBtn.style.opacity = '1'
             }).catch(error => {
                 log(`Error preloading ${nextTrack.name}: ${error}`);
             });
