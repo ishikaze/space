@@ -1,5 +1,5 @@
 let loadingFinished = false;
-let loadMinValue = 0
+let loadMinValue = 40
 
 function updateLoadingStatus(message) {
     const loadingStatus = document.getElementById('loading-status');
