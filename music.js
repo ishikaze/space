@@ -5,61 +5,11 @@ let day
 let month
 let hour
 let minute
-let newTrack
+let playlist = []
+let currentAvailableTracks 
+let isIntro = true;
 let preloaded = false;
 let timeOverride = localStorage.getItem("timeOverride");
-let selectedNewTrack = false;
-
-function setTimeOverride(override) {
-    switch (override) {
-        case 1:
-            timeOverride = 'earlyMorning';
-            localStorage.setItem("timeOverride", "earlyMorning");
-            break;
-        case 2:
-            timeOverride = 'morning';
-            localStorage.setItem("timeOverride", "morning");
-            break;
-        case 3:
-            timeOverride = 'afternoon';
-            localStorage.setItem("timeOverride", "afternoon");
-            break;
-        case 4:
-            timeOverride = 'evening';
-            localStorage.setItem("timeOverride", "evening");
-            break;
-        case 5:
-            timeOverride = 'night';
-            localStorage.setItem("timeOverride", "night");
-            break;
-        case 6:
-            timeOverride = 'lateNight';
-            localStorage.setItem("timeOverride", "lateNight");
-            break;
-        case 0:
-            timeOverride = null;
-            localStorage.removeItem("timeOverride");
-            break;
-    }
-    log(`Time override set to: ${timeOverride}`);
-}
-
-const sleep = (milliseconds) => {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
-};
-
-function updateTime() {
-    const now = new Date();
-    hour = now.getHours();
-    minute = now.getMinutes();
-    const seconds = now.getSeconds();
-    const milliseconds = now.getMilliseconds();
-    const timestamp = now.getTime();
-    day = now.getDate();
-    month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    log(`Updated time [${timestamp}]`);
-}
 
 const tracks = {
     default: {
@@ -392,6 +342,58 @@ const tracks = {
     }
 }
 
+function setTimeOverride(override) {
+    switch (override) {
+        case 1:
+            timeOverride = 'earlyMorning';
+            localStorage.setItem("timeOverride", "earlyMorning");
+            break;
+        case 2:
+            timeOverride = 'morning';
+            localStorage.setItem("timeOverride", "morning");
+            break;
+        case 3:
+            timeOverride = 'afternoon';
+            localStorage.setItem("timeOverride", "afternoon");
+            break;
+        case 4:
+            timeOverride = 'evening';
+            localStorage.setItem("timeOverride", "evening");
+            break;
+        case 5:
+            timeOverride = 'night';
+            localStorage.setItem("timeOverride", "night");
+            break;
+        case 6:
+            timeOverride = 'lateNight';
+            localStorage.setItem("timeOverride", "lateNight");
+            break;
+        case 0:
+            timeOverride = null;
+            localStorage.removeItem("timeOverride");
+            break;
+    }
+    log(`Time override set to: ${timeOverride}`);
+    document.getElementById("time-override-text").innerHTML = 'time override: ' + timeOverride
+}
+
+const sleep = (milliseconds) => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+};
+
+function updateTime() {
+    const now = new Date();
+    hour = now.getHours();
+    minute = now.getMinutes();
+    const seconds = now.getSeconds();
+    const milliseconds = now.getMilliseconds();
+    const timestamp = now.getTime();
+    day = now.getDate();
+    month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    log(`Updated time [${timestamp}]`);
+}
+
 function preloadAudio(url) {
   return new Promise((resolve) => {
     const audio = new Audio();
@@ -400,11 +402,16 @@ function preloadAudio(url) {
   });
 }
 
+function shuffleQueue(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); 
+    [array[i], array[j]] = [array[j], array[i]]; 
+  }
+  return array;
+}
+
 let timeOfDay;
 function getNewTrack() {
-    if (selectedNewTrack) {
-        return;
-    }
     let useTrackList = tracks.default;
     if (month === 1 && day >= 15 && day <= 30) {
         useTrackList = tracks.lunarNewYear;
@@ -438,24 +445,70 @@ function getNewTrack() {
         }
     }
     log(`time of day determined: ${timeOfDay}`);
+    document.getElementById("time-override-text").innerHTML = 'time override: ' + timeOverride
 
-    const trackList = useTrackList[timeOfDay];
-    const randomIndex = Math.floor(Math.random() * trackList.length);
-
-    newTrack = trackList[randomIndex];
-    log(`New track selected: ${newTrack.name} by ${newTrack.artist} [${newTrack.url}]`);
+    currentAvailableTracks = useTrackList[timeOfDay];
     return;
 }
 
-async function playTrack(name, artist, url, timestamp) {
-    await preloadAudio(url);
-    player.src = url;
+async function playTrack() {
+    let toPlay = playlist[0]
+    await preloadAudio(toPlay.url);
+    player.src = toPlay.url;
     player.load();
+    let timestamp = 0
+    if (isIntro) {
+        timestamp = toPlay.startTimestamp
+        isIntro = false
+    }
+    updateQueue()
     log(`starting track at ${timestamp}`);
     player.currentTime = timestamp;
     player.play();
-    ambient.volume = 0.5
-    ambient.play()
+}
+
+function addNewTracks() {
+    // Only proceed if there are available tracks to potentially add
+    if (!currentAvailableTracks || currentAvailableTracks.length === 0) {
+        log("No tracks available to add for current time of day.");
+        return;
+    }
+
+    log("Checking for new tracks to add to the playlist.");
+
+    // Create a Set of URLs already in the playlist for efficient lookup
+    const playlistUrls = new Set(playlist.map(track => track.url));
+
+    // Filter out tracks that are already in the playlist
+    let potentialNewTracks = currentAvailableTracks.filter(track => !playlistUrls.has(track.url));
+
+    // If there are no truly "new" tracks (all have been added before),
+    // then consider re-adding tracks that have already been played and shifted out
+    // but are still part of the currentAvailableTracks.
+    // This prevents the playlist from running out if you only have a few tracks.
+    if (potentialNewTracks.length === 0 && playlist.length < currentAvailableTracks.length) {
+         log("No truly new tracks. Shuffling all available tracks to repopulate.");
+         potentialNewTracks = [...currentAvailableTracks]; // Take all available tracks
+         potentialNewTracks = potentialNewTracks.filter(track => !playlistUrls.has(track.url)); // Re-filter current playlist items
+    }
+
+    // Shuffle the potential new tracks
+    potentialNewTracks = shuffleQueue(potentialNewTracks);
+
+    const tracksToAddCount = Math.min(potentialNewTracks.length, 5); // Add up to 5 new tracks at a time, or fewer if not enough available
+
+    for (let i = 0; i < tracksToAddCount; i++) {
+        if (playlist.length >= 19) { // Keep the playlist from growing indefinitely
+            log("Playlist nearly full, stopping addition of new tracks.");
+            break;
+        }
+        const trackToAdd = potentialNewTracks[i];
+        playlist.push(trackToAdd);
+        log(`Added new track: ${trackToAdd.name}`);
+    }
+    log(`Finished adding new tracks. Playlist length: ${playlist.length}`);
+    console.log("Current Playlist:", playlist);
+    return;
 }
 
 let logTimeout;
@@ -466,23 +519,8 @@ function log(message) {
     if (logTimeout) clearTimeout(logTimeout);
     logTimeout = setTimeout(() => {
         debugPanel.style.opacity = 0;
-    }, 10000);
+    }, 15000);
     debugPanel.scrollTo(0, debugPanel.scrollHeight);
-}
-
-function showMusicController() {
-    const controller = document.getElementById('music-controller');
-    controller.style.opacity = 1;
-}
-
-let controllerTimeout;
-
-function hideMusicController() {
-    const controller = document.getElementById('music-controller');
-    if (controllerTimeout) clearTimeout(controllerTimeout);
-    controllerTimeout = setTimeout(() => {
-        controller.style.opacity = 0;
-    }, 3000);
 }
 
 updateLoadingStatus('Music module loaded.');
@@ -494,11 +532,25 @@ updateTime();
 updateLoadingStatus('Selecting new track...');
 getNewTrack();
 
+if (playlist.length === 0 && currentAvailableTracks.length > 0) {
+    playlist = shuffleQueue([...currentAvailableTracks]); // Create the initial shuffled playlist
+    log(`Initial playlist populated and shuffled. Length: ${playlist.length}`);
+    console.log("Initial Playlist:", playlist);
+} else if (currentAvailableTracks.length === 0) {
+    log("Warning: No tracks defined for the current time of day.");
+}
+
+
 (async function() {
     updateLoadingStatus('Preloading music...');
-    await preloadAudio(newTrack.url);
-    updateLoadingStatus('Click to continue');
-    loadMin()
+    if (playlist.length > 0) { // Ensure there's a track to preload
+        await preloadAudio(playlist[0].url);
+        updateLoadingStatus('Click to continue');
+        loadMin() // Assuming loadMin() is defined elsewhere and prepares the UI
+    } else {
+        updateLoadingStatus('No music to preload. Check track definitions.');
+        // Optionally handle cases where there's no music, e.g., enable play button but show no track
+    }
 })();
 
 //controller logic
@@ -506,6 +558,8 @@ const playPauseBtn = document.getElementById('play-pause');
 const seekSlider = document.getElementById('seek-slider');
 const currentTimeSpan = document.getElementById('current-time');
 const durationSpan = document.getElementById('duration');
+const trackName = document.getElementById('track-name')
+const trackArtist = document.getElementById('track-artist')
 
 function formatTime(seconds) {
     const min = Math.floor(seconds / 60);
@@ -521,6 +575,8 @@ player.addEventListener('loadedmetadata', () => {
 player.addEventListener('timeupdate', () => {
     seekSlider.value = player.currentTime;
     currentTimeSpan.textContent = formatTime(player.currentTime);
+    trackName.innerHTML = playlist[0].name
+    trackArtist.innerHTML = "by " + playlist[0].artist
 });
 
 seekSlider.addEventListener('input', () => {
@@ -530,40 +586,84 @@ seekSlider.addEventListener('input', () => {
 playPauseBtn.addEventListener('click', () => {
     if (player.paused) {
         player.play();
-        playPauseBtn.textContent = 'Pause';
     } else {
         player.pause();
-        playPauseBtn.textContent = 'Play';
     }
 });
 
 player.addEventListener('play', () => {
-    playPauseBtn.textContent = 'Pause';
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
 });
 player.addEventListener('pause', () => {
-    playPauseBtn.textContent = 'Play';
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
 });
 
 player.addEventListener('timeupdate', async () => {
-if (preloaded)  {
-    return;
-} 
-if ((player.duration - player.currentTime) < 20) {
-        preloaded = true;
-        updateTime()
-        getNewTrack()
-        await preloadAudio(newTrack.url).then(() => {
-            log(`Preloaded next track: ${newTrack.name}`);
-        });
+    // Check if the player has valid duration before proceeding with preload logic
+    if (isNaN(player.duration) || player.duration === 0) {
+        return;
+    }
+
+    // Preload the next track when the current one is nearing its end
+    if (!preloaded && (player.duration - player.currentTime) < 20) {
+        preloaded = true; // Set flag immediately to prevent multiple calls
+        
+        // Ensure there's a next track to preload
+        if (playlist.length > 1) { // We need at least 2 tracks: current and next
+            let nextTrack = playlist[1];
+            log(`Preloading next track: ${nextTrack.name}`);
+            
+            await preloadAudio(nextTrack.url).then(() => {
+                log(`Successfully preloaded: ${nextTrack.name}`);
+            }).catch(error => {
+                log(`Error preloading ${nextTrack.name}: ${error}`);
+            });
+            
+            // Now, after preloading the *next* track, check if we need to add more
+            // This ensures the playlist is topped up for future tracks
+            addNewTracks(); 
+        } else {
+            log("Only one track left in playlist. Attempting to add more now.");
+            addNewTracks(); // Try to add more even if only one track remains
+            if (playlist.length > 1) { // If adding was successful, preload the new next track
+                 let nextTrack = playlist[1];
+                 log(`Preloading newly added next track: ${nextTrack.name}`);
+                 await preloadAudio(nextTrack.url).then(() => {
+                     log(`Successfully preloaded: ${nextTrack.name}`);
+                 }).catch(error => {
+                     log(`Error preloading ${nextTrack.name}: ${error}`);
+                 });
+            } else {
+                log("Could not add more tracks, only one track remaining.");
+            }
+        }
     }
 });
 // hm? the block above looks weird? i know but it bugs out if i dont do it like this...
 
 function newSong() {
-    log('Song ended, playing preloaded track...');
-    playTrack(newTrack.name, newTrack.artist, newTrack.url, 0);
-    preloaded = false;
-    selectedNewTrack = false;
+    log('Song ended, moving to next track...');
+    playlist.shift(); // Remove the finished song from the beginning of the playlist
+    console.log("Playlist after shift:", playlist);
+
+    if (playlist.length === 0) {
+        log("Playlist empty! Attempting to repopulate.");
+        // This scenario should ideally be rare if addNewTracks works well,
+        // but it's a fallback.
+        getNewTrack(); // Re-evaluate time of day and available tracks
+        addNewTracks(); // Repopulate
+        if (playlist.length === 0) {
+            log("Still no tracks after repopulating. Music will stop.");
+            // Optionally, handle UI for no music
+            player.pause();
+            playPauseBtn.textContent = 'Play';
+            return;
+        }
+    }
+    
+    playTrack();
+    preloaded = false; // Reset preloaded flag for the *new* track
+    // selectedNewTrack is removed as it's not used/needed with this logic
 }
 
 async function trackFadeIn() {
@@ -575,4 +675,30 @@ async function trackFadeIn() {
     }
 }
 
-hideMusicController()
+
+function updateQueue() {
+  const queue = document.getElementById('music-queue');
+  const trackQueue = playlist;
+  queue.innerHTML = ''
+
+  for (let i = 1; i < 4 && i < trackQueue.length; i++) {
+    const queueItem = trackQueue[i];
+
+    const div = document.createElement('div');
+    const divider = document.createElement('div');
+    div.classList.add('queue-item');
+    divider.classList.add('queue-divider');
+
+    const trackName = document.createElement('h3');
+    trackName.textContent = queueItem.name;
+
+    const artistName = document.createElement('p');
+    artistName.textContent = queueItem.artist;
+
+    div.appendChild(trackName);
+    div.appendChild(artistName);
+
+    queue.appendChild(div);
+    queue.appendChild(divider)
+  }
+}

@@ -26,20 +26,9 @@ body, html {
     z-index: 1000;
     opacity: 0;
     transition: all 0.5s ease-in-out;
-    max-height: 100vh;
+    max-height: 20vh;
     overflow-y: scroll;
-    pointer-events: none;
-}
-
-#music-controller {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    padding: 1em 1em 5em 1em;
-    z-index: 1000;
-    background-color: rgba(0,0,0,0.5);
-    color: white;
-    transition: all 0.5s ease-in-out;
+    scroll-behavior: smooth;
 }
 
 #loading-page {
@@ -165,6 +154,179 @@ path {
   z-index: 1;
 } */
 
+#music-controller-overlay {
+  position: absolute;
+  top: 50%;
+  left: -26em;
+  transform: translateY(-50%);
+  width: 25em;
+  height: auto;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.31);
+  padding: 1em;
+  z-index: 10;
+  transition: all 0.5s ease-in-out;
+}
+
+#music-info-container {
+  color: #FFF;
+  font: 2em;
+}
+
+#track-name {
+  font-size: 2em;
+  margin-bottom: 0.1em;
+}
+
+#music-controller-trigger {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: -100%;
+  left: 25em;
+  width: 50%;
+  height: 200vh;
+  background-color: #ff000000;
+  z-index: 1;
+  transition: all 2s;
+}
+
+#music-controller {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0);
+    color: white;
+    transition: all 0.5s ease-in-out;
+}
+
+#seek-slider {
+  width: 100%;
+  margin: 2em 0 0.5em 0;
+  -webkit-appearance: none; 
+  -moz-appearance: none; 
+  appearance: none; 
+  background: transparent; 
+  cursor: pointer;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.418);
+  border-radius: 16px;
+  height: 0.5em;
+  transition: all 0.1s ease-in-out;
+}
+
+#seek-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: #e0e0e0; /* Thumb color */
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.1s ease-in-out;
+}
+
+#seek-slider::-webkit-slider-thumb:hover {
+  background: #ffffff;
+  transform: scale(1.2);
+}
+
+
+#track-duration-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+#play-pause {
+  width: 5em;
+  height: 5em;
+  border-radius: 50%;
+  margin: 1em auto;
+  border: #ffffff solid 2px;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  color: #ffffff;
+  opacity: 0.6;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+}
+
+#play-pause:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+#play-pause i {
+  font-size: 1.5em;
+}
+
+#music-queue-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  opacity: 0.75;
+}
+
+#music-queue-container p {
+  font-size: 1em;
+}
+
+#music-queue {
+  border: #ffffff 1px solid;
+  border-radius: 16px;
+  padding: 0 1em;
+  margin: 1em 0;
+}
+
+.queue-item {
+  margin: 1em 0;
+}
+
+.queue-item p {
+ font-size: 0.75em;
+}
+
+.queue-divider {
+  width: 100%;
+  height: 0.01em;
+  background-color: #ffffff;
+}
+
+#time-override-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin: 1em 0;
+  opacity: 0.5;
+}
+
+.timeOverrideBtn {
+  background: rgba(255, 255, 255, 0.014);
+  border-radius: 24px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.31);
+  padding: 1em;
+  font-family: Playfair;
+  color: #ffffff;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+}
+
+.timeOverrideBtn:hover {
+  transform: scale(1.1);
+  background-color: #ffffff71;
+  color: #000000;
+}
+
 @media only screen and (max-width: 720px) {
   #dialogue {
     font-size: 3em;
@@ -211,4 +373,24 @@ path {
     overflow-y: scroll;
     pointer-events: none;
   }
+
+  #music-controller-overlay {
+    transform: scale(0.75) translateY(-30em) translateX(-5em);
+  }
+
+  #music-controller-trigger {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: -100%;
+  left: 25em;
+  width: 50%;
+  height: 200vh;
+  background-color: #ff000000;
+  z-index: 1;
+  transition: all 2s;
+  transform: scale(0.75) translateY(10em) translateX(10em);
+}
+
 }

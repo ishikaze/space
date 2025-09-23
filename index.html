@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="styles.css">
     <title>space</title>
 </head>
@@ -66,21 +67,82 @@
         <source src="./assets/ambient.mp3" type="audio/mp3">
     </audio>
 
-    <div id="music-controller" onmouseover="showMusicController()" onmouseout="hideMusicController()">
-        <button id="play-pause">Play</button>
-        <input type="range" id="seek-slider" min="0" value="0" step="0.01">
-        <span id="current-time">0:00</span> / <span id="duration">0:00</span> <br>
-        <span>time override: </span>
-        <button onmousedown="setTimeOverride(1)">earlyMorning</button>
-        <button onmousedown="setTimeOverride(2)">morning</button>
-        <button onmousedown="setTimeOverride(3)">afternoon</button>
-        <button onmousedown="setTimeOverride(4)">evening</button>
-        <button onmousedown="setTimeOverride(5)">night</button>
-        <button onmousedown="setTimeOverride(6)">lateNight</button>
-        <button onmousedown="setTimeOverride(0)">off</button>
-    </div>
-
         <div id="hue-overlay"></div>
+    
+    <div id="music-controller-overlay">
+        <div id="music-controller-trigger">
+            <span></span>
+        </div>
+        <div id="music-info-container">
+            <h4 id="track-name">Track name</h4>
+            <p id="track-artist">Track artist</p>
+        </div>
+        <div id="music-controller">
+        <input type="range" id="seek-slider" min="0" value="0" step="0.01">
+        <div id="track-duration-container">
+            <span id="current-time">0:00</span> <span id="duration">0:00</span>
+        </div>
+        
+        <div id="music-controller-buttons">
+            <button id="play-pause"></i></button>
+        </div>
+        <div id="music-queue-container">
+            <p>Up next</p>
+            <div id="music-queue">
+                
+            </div>
+        </div>
+        <span id="time-override-text" style="opacity: 0.5;">time override: </span>
+        <div id="time-override-container">
+            <button onmousedown="setTimeOverride(1)" class="timeOverrideBtn">earlyMorning</button>
+            <button onmousedown="setTimeOverride(2)" class="timeOverrideBtn">morning</button>
+            <button onmousedown="setTimeOverride(3)" class="timeOverrideBtn">afternoon</button>
+            <button onmousedown="setTimeOverride(4)" class="timeOverrideBtn">evening</button>
+            <button onmousedown="setTimeOverride(5)" class="timeOverrideBtn">night</button>
+            <button onmousedown="setTimeOverride(6)" class="timeOverrideBtn">lateNight</button>
+            <button onmousedown="setTimeOverride(0)" class="timeOverrideBtn">off</button>
+        </div>
+        
+    </div>
+    
+    <script>
+        const controllerOverlay = document.getElementById("music-controller-overlay");
+        const controllerTrigger = document.getElementById("music-controller-trigger");
+
+        let controllerOverlayOver = false;
+        let controllerTriggerOver = false;
+
+        controllerOverlay.addEventListener("mouseover", () => {
+            controllerOverlayOver = true;
+            controllerMouseCheck()
+        });
+
+        controllerTrigger.addEventListener("mouseover", () => {
+            controllerTriggerOver = true;
+            controllerMouseCheck()
+        });
+
+        controllerOverlay.addEventListener("mouseout", () => {
+            controllerOverlayOver = false;
+            controllerMouseCheck()
+        });
+
+        controllerTrigger.addEventListener("mouseout", () => {
+            controllerTriggerOver = false;
+            controllerMouseCheck()
+        });
+
+
+        function controllerMouseCheck() {
+            if (controllerOverlayOver === true || controllerTriggerOver === true){
+                controllerOverlay.style.left = "2em"
+                controllerTrigger.style.width = "0em"
+            } else {
+                controllerOverlay.style.left = "-35em"
+                controllerTrigger.style.width = "20em"
+            }
+        }
+    </script>
 
     <script src="./waves.js"></script>
     <script src="./liquid.js"></script>
@@ -98,13 +160,19 @@
                 await sleep(50);
                 log("* Added abuncha new music!");  
                 await sleep(50);
-                log("* Time override now persists after refresh or revisit");   
-                await sleep(50);        
+                log("* Time override now persists after refresh or revisit");          
+                await sleep(50);
+                log("* Added a new music controller (hover left)"); 
+                await sleep(50);   
                 log("")
                 await sleep(50);
                 log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
                 await sleep(50);
                 log("")
+                controllerTrigger.style.backgroundColor = "#FFFFFF"
+                controllerTrigger.style.opacity = '0.5'
+                await sleep(2000);
+                controllerTrigger.style.opacity = '0'
             }, 3000);
             
         }
