@@ -497,10 +497,9 @@ getNewTrack();
 (async function() {
     updateLoadingStatus('Preloading music...');
     await preloadAudio(newTrack.url);
+    updateLoadingStatus('Click to continue');
+    loadMin()
 })();
-
-updateLoadingStatus('Click to continue');
-loadMin()
 
 //controller logic
 const playPauseBtn = document.getElementById('play-pause');
