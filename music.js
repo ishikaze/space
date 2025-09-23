@@ -550,11 +550,11 @@ if (preloaded)  {
     return;
 } 
 if ((player.duration - player.currentTime) < 20) {
+        preloaded = true;
         updateTime()
         getNewTrack()
         await preloadAudio(newTrack.url).then(() => {
             log(`Preloaded next track: ${newTrack.name}`);
-            preloaded = true;
         });
     }
 });
