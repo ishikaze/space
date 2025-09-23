@@ -62,6 +62,9 @@
     <audio id="player" onended="newSong()" preload="auto" src="./assets/music/default/songOfPeace.mp3"> 
         <source src="./assets/music/default/songOfPeace.mp3" type="audio/mp3">
     </audio>
+    <audio id="ambient" loop preload="auto" src="./assets/ambient.mp3"> 
+        <source src="./assets/ambient.mp3" type="audio/mp3">
+    </audio>
 
     <div id="music-controller" onmouseover="showMusicController()" onmouseout="hideMusicController()">
         <button id="play-pause">Play</button>
@@ -86,21 +89,21 @@
         function welcomeMessage() {
             setTimeout(async () => {
                 log("")
+                await sleep(50);
                 log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
+                await sleep(50);
                 log("")
-                await sleep(500);
-                log("hi!!!!!"); 
-                await sleep(2000);
-                log("thanks for checking out my project :3"); 
-                await sleep(4000);
-                log("i just added a bunch of night and late night music!"); 
-                await sleep(4000);
-                log("use the time override buttons in the music controller to listen to music from different times of day!"); 
-                await sleep(2000);
-                log("(its in the bottom left corner or bottom on mobile, you need to hover over or click on mobile to see it)"); 
-                await sleep(500);
+                await sleep(50);
+                log("[23/9/2025]");        
+                await sleep(50);
+                log("* Added abuncha new music!");  
+                await sleep(50);
+                log("* Time override now persists after refresh or revisit");   
+                await sleep(50);        
                 log("")
+                await sleep(50);
                 log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
+                await sleep(50);
                 log("")
             }, 3000);
             

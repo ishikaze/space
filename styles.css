@@ -135,11 +135,12 @@ body, html {
   pointer-events: none;
   cursor: pointer;
   text-shadow: 0px 0px 10px rgba(0,0,0,1);
+  transition: all 1s;
 }
 
 .selection:hover {
-  opacity: 1;
-  filter: blur(0) contrast(1);
+  font-size: 3em;
+  text-shadow: 0px 0px 20px rgba(0,0,0,1);
 }
 
 svg{
@@ -172,6 +173,10 @@ path {
   .selection {
   font-size: 2em; 
   }
+
+  .selection:hover {
+  font-size: 2.5em;
+}
 
   #selection-container {
   width: 100%;
