@@ -44,22 +44,34 @@ const tracks = {
         ],
         afternoon: [
             {
-                name: "arrival",
-                artist: "succducc",
-                url: "./assets/music/default/arrival.mp3",
+                name: "Purple Skies (Extended Mix)",
+                artist: "Mameyudoufu",
+                url: "./assets/music/default/purpleSkies.mp3",
                 startTimestamp: 0
             },
             {
-                name: "Planet Express",
-                artist: "Ujico*",
-                url: "./assets/music/default/planetExpress.mp3",
-                startTimestamp: 0
+                name: "Sakura in Tokyo",
+                artist: "Gaiyu",
+                url: "./assets/music/default/sakuraInTokyo.mp3",
+                startTimestamp: 115.5
             },
             {
-                name: "Petals Fall",
-                artist: "Hudson Lee and Oyeme",
-                url: "./assets/music/default/petalsFall.mp3",
-                startTimestamp: 0
+                name: "Summer ever",
+                artist: "DE DE MOUSE and Pa's Lam System",
+                url: "./assets/music/default/summerEver.mp3",
+                startTimestamp: 121
+            },
+            {
+                name: "There and Back",
+                artist: "Protostar",
+                url: "./assets/music/default/thereAndBack.mp3",
+                startTimestamp: 176
+            },
+            {
+                name: "What If",
+                artist: "Stessie",
+                url: "./assets/music/default/whatIf.mp3",
+                startTimestamp: 160
             }
         ],
         evening: [
@@ -202,6 +214,18 @@ const tracks = {
                 artist: "Lifeformed",
                 url: "./assets/music/default/toFarShores.mp3",
                 startTimestamp: 101
+            },
+            {
+                name: "Choral Chambers from Hollow Knight: Silksong (Rameses B Remix)",
+                artist: "Christopher Larkin, Rameses B",
+                url: "./assets/music/default/choralChambers.mp3",
+                startTimestamp: 128
+            },
+            {
+                name: "The Core (Say Goodbye Mix)",
+                artist: "Matthewせいじ",
+                url: "./assets/music/default/theCore.mp3",
+                startTimestamp: 180.5
             }
         ],
         lateNight: [
@@ -276,6 +300,18 @@ const tracks = {
                 artist: "linear ring",
                 url: "./assets/music/default/canYouHearMe.mp3",
                 startTimestamp: 109
+            },
+            {
+                name: "Glacier",
+                artist: "Laur",
+                url: "./assets/music/default/glacier.mp3",
+                startTimestamp: 123.5
+            },
+            {
+                name: "Satellite (Sewerslvt Edit)",
+                artist: "Oceanlab and Sewerslvt",
+                url: "./assets/music/default/satellite.mp3",
+                startTimestamp: 40
             }
         ]
     },
@@ -543,6 +579,7 @@ if (playlist.length === 0 && currentAvailableTracks.length > 0) {
 
 (async function() {
     updateLoadingStatus('Preloading music...');
+    updateSky(timeOfDay)
     if (playlist.length > 0) {
         await preloadAudio(playlist[0].url);
         updateLoadingStatus('Click to continue');
@@ -645,10 +682,36 @@ player.addEventListener('timeupdate', async () => {
 });
 // hm? the block above looks weird? i know but it bugs out if i dont do it like this...
 
+function updateSky(time) {
+    // const sky = document.getElementById('main-container')
+    // switch (time) {
+    //     case 'earlyMorning':
+    //         sky.style.backgroundColor = '#ff6db1ff'
+    //         break;
+    //     case 'morning':
+    //         sky.style.backgroundColor = '#b6cbffff'
+    //         break;
+    //     case 'afternoon':
+    //         sky.style.backgroundColor = '#80a4ffff'
+    //         break;
+    //     case 'evening':
+    //         sky.style.backgroundColor = '#745ed6ff'
+    //         break;
+    //     case 'night':
+    //         sky.style.backgroundColor = '#0c152bff'
+    //         break;
+    //     default:
+    //         sky.style.backgroundColor = '#060b18'
+    //         break;
+    // }
+    // console.log(`updated bg ${time}`)
+}
+
 function newSong() {
     log('Song ended, moving to next track...');
 
     updateTime();
+    updateSky(timeOfDay)
     getNewTrack();
 
     if (timeOfDay !== lastCheckedTimeOfDay) {
