@@ -549,6 +549,7 @@ if (playlist.length === 0 && currentAvailableTracks.length > 0) {
     } else {
         updateLoadingStatus('No music to preload. Check track definitions.');
     }
+    loadMin()
 })();
 
 //controller logic

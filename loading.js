@@ -1,5 +1,5 @@
 let loadingFinished = false;
-let loadMinValue = 0.1
+let loadMinValue = 250
 
 function updateLoadingStatus(message) {
     const loadingStatus = document.getElementById('loading-status');
@@ -16,6 +16,9 @@ async function loadMin() {
         }
         randomTime = Math.random() * loadMinValue
         updateLoadingStatus(`Loading... ${i + 1}%`);
+        if (document.readyState === 'complete') {
+            i = 100
+        }
         await sleep(randomTime)
     }
 
@@ -24,10 +27,6 @@ async function loadMin() {
     loadingHeader.innerHTML = 'Loaded!';
     updateLoadingStatus("click anywhere to continue")
 }
-
-window.addEventListener('load', function() {
-    loadMin()
-});
 
 function closeLoading() {
     console.log(loadingFinished)
