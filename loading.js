@@ -1,5 +1,5 @@
 let loadingFinished = false;
-let loadMinValue = 0
+let loadMinValue = 0.1
 
 function updateLoadingStatus(message) {
     const loadingStatus = document.getElementById('loading-status');
@@ -24,6 +24,10 @@ async function loadMin() {
     loadingHeader.innerHTML = 'Loaded!';
     updateLoadingStatus("click anywhere to continue")
 }
+
+window.addEventListener('load', function() {
+    loadMin()
+});
 
 function closeLoading() {
     console.log(loadingFinished)

@@ -169,7 +169,7 @@ path {
   border: 1px solid rgba(255, 255, 255, 0.31);
   padding: 1em;
   z-index: 10;
-  transition: all 0.5s ease-in-out;
+  transition: all 0.2s ease-in-out;
 }
 
 #music-info-container {
@@ -188,8 +188,8 @@ path {
   justify-content: center;
   align-items: center;
   top: -100%;
-  left: 25em;
-  width: 50%;
+  left: -2em;
+  width: 45em;
   height: 200vh;
   background-color: #ff000000;
   z-index: 1;
@@ -203,7 +203,7 @@ path {
     z-index: 1000;
     background-color: rgba(0, 0, 0, 0);
     color: white;
-    transition: all 0.5s ease-in-out;
+    transition: all 0.23s ease-in-out;
 }
 
 #seek-slider {
@@ -284,6 +284,13 @@ path {
   border-radius: 16px;
   padding: 0 1em;
   margin: 1em 0;
+  max-height: 18em;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+#music-queue::-webkit-scrollbar {
+  display: none; 
 }
 
 .queue-item {
@@ -384,7 +391,7 @@ path {
   justify-content: center;
   align-items: center;
   top: -100%;
-  left: 25em;
+  left: -25em;
   width: 50%;
   height: 200vh;
   background-color: #ff000000;

@@ -6,10 +6,11 @@ let month
 let hour
 let minute
 let playlist = []
-let currentAvailableTracks 
+let currentAvailableTracks
 let isIntro = true;
 let preloaded = false;
 let timeOverride = localStorage.getItem("timeOverride");
+let lastCheckedTimeOfDay;
 
 const tracks = {
     default: {
@@ -404,8 +405,8 @@ function preloadAudio(url) {
 
 function shuffleQueue(array) {
   for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1)); 
-    [array[i], array[j]] = [array[j], array[i]]; 
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
 }
@@ -444,6 +445,11 @@ function getNewTrack() {
                 break;
         }
     }
+
+    if (!lastCheckedTimeOfDay) {
+        lastCheckedTimeOfDay = timeOfDay;
+    }
+
     log(`time of day determined: ${timeOfDay}`);
     document.getElementById("time-override-text").innerHTML = 'time override: ' + timeOverride
 
@@ -468,7 +474,7 @@ async function playTrack() {
 }
 
 function addNewTracks() {
-    // Only proceed if there are available tracks to potentially add
+
     if (!currentAvailableTracks || currentAvailableTracks.length === 0) {
         log("No tracks available to add for current time of day.");
         return;
@@ -476,29 +482,23 @@ function addNewTracks() {
 
     log("Checking for new tracks to add to the playlist.");
 
-    // Create a Set of URLs already in the playlist for efficient lookup
     const playlistUrls = new Set(playlist.map(track => track.url));
 
-    // Filter out tracks that are already in the playlist
     let potentialNewTracks = currentAvailableTracks.filter(track => !playlistUrls.has(track.url));
 
-    // If there are no truly "new" tracks (all have been added before),
-    // then consider re-adding tracks that have already been played and shifted out
-    // but are still part of the currentAvailableTracks.
-    // This prevents the playlist from running out if you only have a few tracks.
     if (potentialNewTracks.length === 0 && playlist.length < currentAvailableTracks.length) {
          log("No truly new tracks. Shuffling all available tracks to repopulate.");
-         potentialNewTracks = [...currentAvailableTracks]; // Take all available tracks
-         potentialNewTracks = potentialNewTracks.filter(track => !playlistUrls.has(track.url)); // Re-filter current playlist items
+         potentialNewTracks = [...currentAvailableTracks];
+         potentialNewTracks = potentialNewTracks.filter(track => !playlistUrls.has(track.url));
     }
 
-    // Shuffle the potential new tracks
+
     potentialNewTracks = shuffleQueue(potentialNewTracks);
 
-    const tracksToAddCount = Math.min(potentialNewTracks.length, 5); // Add up to 5 new tracks at a time, or fewer if not enough available
+    const tracksToAddCount = Math.min(potentialNewTracks.length, 5);
 
     for (let i = 0; i < tracksToAddCount; i++) {
-        if (playlist.length >= 19) { // Keep the playlist from growing indefinitely
+        if (playlist.length >= 19) {
             log("Playlist nearly full, stopping addition of new tracks.");
             break;
         }
@@ -533,7 +533,7 @@ updateLoadingStatus('Selecting new track...');
 getNewTrack();
 
 if (playlist.length === 0 && currentAvailableTracks.length > 0) {
-    playlist = shuffleQueue([...currentAvailableTracks]); // Create the initial shuffled playlist
+    playlist = shuffleQueue([...currentAvailableTracks]);
     log(`Initial playlist populated and shuffled. Length: ${playlist.length}`);
     console.log("Initial Playlist:", playlist);
 } else if (currentAvailableTracks.length === 0) {
@@ -543,13 +543,11 @@ if (playlist.length === 0 && currentAvailableTracks.length > 0) {
 
 (async function() {
     updateLoadingStatus('Preloading music...');
-    if (playlist.length > 0) { // Ensure there's a track to preload
+    if (playlist.length > 0) {
         await preloadAudio(playlist[0].url);
         updateLoadingStatus('Click to continue');
-        loadMin() // Assuming loadMin() is defined elsewhere and prepares the UI
     } else {
         updateLoadingStatus('No music to preload. Check track definitions.');
-        // Optionally handle cases where there's no music, e.g., enable play button but show no track
     }
 })();
 
@@ -604,19 +602,18 @@ player.addEventListener('timeupdate', async () => {
         return;
     }
 
-    // Preload the next track when the current one is nearing its end
-    if (!preloaded && (player.duration - player.currentTime) < 20) {
+    // Preload the next track when the current one is playing
+    if (!preloaded && (player.duration - player.currentTime) > 0) {
         preloaded = true; // Set flag immediately to prevent multiple calls
-        
-        // Ensure there's a next track to preload
-        if (playlist.length > 1) { // We need at least 2 tracks: current and next
+
+        if (playlist.length > 1) {
             let nextTrack = playlist[1];
             seekSlider.style.pointerEvents = 'none'
             seekSlider.style.opacity = '0.5'
             playPauseBtn.style.pointerEvents = 'none'
             playPauseBtn.style.opacity = '0.5'
             log(`Preloading next track: ${nextTrack.name}`);
-            
+
             await preloadAudio(nextTrack.url).then(() => {
                 log(`Successfully preloaded: ${nextTrack.name}`);
                 seekSlider.style.pointerEvents = 'auto'
@@ -626,14 +623,12 @@ player.addEventListener('timeupdate', async () => {
             }).catch(error => {
                 log(`Error preloading ${nextTrack.name}: ${error}`);
             });
-            
-            // Now, after preloading the *next* track, check if we need to add more
-            // This ensures the playlist is topped up for future tracks
-            addNewTracks(); 
+
+            addNewTracks();
         } else {
             log("Only one track left in playlist. Attempting to add more now.");
-            addNewTracks(); // Try to add more even if only one track remains
-            if (playlist.length > 1) { // If adding was successful, preload the new next track
+            addNewTracks();
+            if (playlist.length > 1) {
                  let nextTrack = playlist[1];
                  log(`Preloading newly added next track: ${nextTrack.name}`);
                  await preloadAudio(nextTrack.url).then(() => {
@@ -651,33 +646,42 @@ player.addEventListener('timeupdate', async () => {
 
 function newSong() {
     log('Song ended, moving to next track...');
-    playlist.shift(); // Remove the finished song from the beginning of the playlist
-    console.log("Playlist after shift:", playlist);
+
+    updateTime();
+    getNewTrack();
+
+    if (timeOfDay !== lastCheckedTimeOfDay) {
+        log(`Time of day has changed from ${lastCheckedTimeOfDay} to ${timeOfDay}.`);
+        lastCheckedTimeOfDay = timeOfDay;
+        playlist = [];
+        log("Playlist cleared. Getting new tracks.");
+        addNewTracks();
+    } else {
+        playlist.shift();
+        console.log("Playlist after shift:", playlist);
+    }
+
 
     if (playlist.length === 0) {
         log("Playlist empty! Attempting to repopulate.");
-        // This scenario should ideally be rare if addNewTracks works well,
-        // but it's a fallback.
-        getNewTrack(); // Re-evaluate time of day and available tracks
-        addNewTracks(); // Repopulate
+
+        addNewTracks();
         if (playlist.length === 0) {
             log("Still no tracks after repopulating. Music will stop.");
-            // Optionally, handle UI for no music
             player.pause();
             playPauseBtn.textContent = 'Play';
             return;
         }
     }
-    
+
     playTrack();
-    preloaded = false; // Reset preloaded flag for the *new* track
-    // selectedNewTrack is removed as it's not used/needed with this logic
+    preloaded = false;
 }
 
 async function trackFadeIn() {
     player.volume = 0
-    log(`track fading in: 80%`)
-    for (let i = 0; i <= 80; i++) {
+    log(`track fading in`)
+    for (let i = 0; i <= 50; i++) {
         player.volume = i / 100
         await sleep(35)
     }
@@ -689,7 +693,7 @@ function updateQueue() {
   const trackQueue = playlist;
   queue.innerHTML = ''
 
-  for (let i = 1; i < 4 && i < trackQueue.length; i++) {
+  for (let i = 1; i < trackQueue.length; i++) {
     const queueItem = trackQueue[i];
 
     const div = document.createElement('div');
