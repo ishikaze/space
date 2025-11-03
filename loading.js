@@ -1,5 +1,7 @@
 let loadingFinished = false;
 let loadMinValue = 250
+let maxWaitTime = 20
+let waitTime = 0
 
 function updateLoadingStatus(message) {
     const loadingStatus = document.getElementById('loading-status');
@@ -10,22 +12,39 @@ updateLoadingStatus('Initializing...');
 
 async function loadMin() {
     
-    for (let i = 0; i < 100; i++) {
-        if (loadMinValue === 0) {
-            i = 100
+    for (let i = 1; i < 5; i++) {
+        let dots = '...'
+        switch (i) {
+            case 1:
+                dots = '.'
+                break;
+            case 2:
+                dots = '..'
+                break;
+            case 3:
+                dots = '...'
+                break;
+        }
+        if (i === 3) {
+            i = 0
         }
         randomTime = Math.random() * loadMinValue
-        updateLoadingStatus(`Loading... ${i + 1}%`);
+        updateLoadingStatus(`Connecting to chat${dots}`);
         if (document.readyState === 'complete') {
             i = 100
         }
-        await sleep(randomTime)
+        await sleep(1000)
+        if (maxWaitTime < waitTime) {
+            updateLoadingStatus(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
+            await sleep(5000)
+            i = 100
+        }
     }
 
     loadingFinished = true;
     const loadingHeader = document.getElementById('loading-header');
     loadingHeader.innerHTML = 'Loaded!';
-    updateLoadingStatus("click anywhere to continue")
+    updateLoadingStatus("click anywhere to continue (sound warning!)")
 }
 
 async function closeLoading() {

@@ -344,12 +344,20 @@ path {
 
 #chat-container {
   position: absolute;
-  top: 0;
+  top: 50%;
   right: -40em;
-  width: 40em;
-  height: 100%;
-  z-index: 999;
-  transition: all 0.25s ease-in-out;
+  width: 25em;
+  height: 80%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.31);
+  padding: 1em;
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
 }
 
 #chattable {

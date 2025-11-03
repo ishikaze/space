@@ -16,10 +16,11 @@ body, html {
 }
 .allMessages {
  display: flex;
- gap: 2.5vh;
+ flex-direction: column;
+ gap: 0.5em;
  background: rgba(114, 114, 114, 0.2);
  border: 1px solid rgba(255, 255, 255, 0.5);
- font-size: 2em;
+ font-size: 1.25em;
  font-weight: lighter;
  border-radius: 16px;
  margin: 0;
@@ -70,22 +71,23 @@ br {
  text-align: left;
 }
 #input, #nameEntry {
- background-color: rgba(255, 255, 255, 0.2);
+ background-color: rgba(194, 194, 194, 0.2);
  color: rgba(255, 255, 255, 1);
  border: none;
  font-family: 'Playfair Display', serif;
- font-size: 2em;
+ font-size: 1em;
  padding: 1em;
- width: calc(100% - 10px);
- border-radius: 0;
+ width: 100%;
+ border-radius: 16px;
  margin: 0;
- border-top: solid 1px rgba(255, 255, 255, 0.5);
+ border: solid 1px rgba(255, 255, 255, 0.5);
 }
 #input:focus, #nameEntry:focus {
- outline: dotted 1px #AAA;
+ border-radius: 16px;
 }
 #input:empty::before {
- content: "Leave a message...";
+ content: "leave a message...";
+ border-radius: 16px;
  color: #AAA;
 }
 a {
@@ -94,7 +96,7 @@ a {
 #timestamp {
  color: rgba(255, 255, 255, 1);
  text-align: center;
- font-size: 8pt;
+ font-size: 0.5em;
  margin: 0;
 }
 #timestamp:after {
@@ -105,27 +107,44 @@ a {
 .badge {
   display: none;
 }
+@keyframes hueShift {
+  0% {
+    filter: hue-rotate(0deg) saturate(0.75);
+  }
+
+  50% {
+    filter: hue-rotate(360deg) saturate(0.75);
+  }
+
+  100% {
+    filter: hue-rotate(0deg) saturate(0.75);
+  }
+}
 .senderInfo:has(.owner) {
  font-family: 'Playfair Display', serif;
  font-weight: bold;
- color: rgb(70, 156, 255);
+ color: rgb(157, 203, 255);
  text-shadow: 0 0 3px rgb(0, 0, 0);
+ animation: hueShift 120s linear infinite;
 }
 .senderInfo:has(.mod) {
   font-family: Verdana;
   font-weight: bold;
-  color: rgb(115, 222, 255);
+  color: rgb(145, 115, 255);
  text-shadow: 0 0 3px rgb(0, 0, 0);
+ animation: hueShift 120s linear infinite;
 }
 #top_banner {
  display: none;
 }
 #settings {
- filter: invert(50%);
+ filter: invert(100%);
  opacity: 0.75;
+ width: 3em;
+ height: 3em;
 }
 #settings:hover {
- filter: invert(10%);
+ filter: invert(90%);
 }
 blockquote {
  font-style: italic;
@@ -145,10 +164,9 @@ blockquote {
 .pinned .allMessages {
   background: rgba(0, 0, 0, 0.25);
   border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.31);
+  border: 1px solid rgba(135, 201, 255, 0.31);
   padding: 1em;
 }
 .pinned::before {
@@ -193,12 +211,13 @@ blockquote {
 .pinned:after {
  display: inline-block;
  position: absolute;
- right: 2px;
- top: 2px;
+ right: 1em;
+ top: 1em;
  content: "📌";
 }
 #replyBanner {
-  font-size: 8pt;
+  font-size: 0.75em;
+  color: #FFFFFF;
   font-family: 'Playfair Display', serif;
 }
 #is_typing {
@@ -216,6 +235,15 @@ pre:has(>code){
   color: #FFF;
 }
 #emojiTrayToggle {
-  font-size: 2em;
-  color: #FFF;
+  height: 3em;
+  width: 3em;
+  filter: invert(100%)
+}
+#settingsMenu {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #00000081;
+  color: #FFFFFF;
 }
