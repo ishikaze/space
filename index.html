@@ -12,6 +12,7 @@
         <h1 id="loading-header">Loading...</h1>
         <p id="loading-status"></p>
     </div>
+
     <p id='debug'>
         > Welcome!
     </p>
@@ -26,7 +27,7 @@
     </svg>
 
     <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-            <defs>
+        <defs>
             <filter id="shadowed-goo">
                 
                 <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10" />
@@ -42,8 +43,8 @@
                 <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
                 <feBlend in2="goo" in="SourceGraphic" result="mix" />
             </filter>
-            </defs>
-        </svg>
+        </defs>
+    </svg>
 
     <div id="main-container">
         <canvas id="canvas">Your browser doesn't support canvas</canvas>
@@ -67,7 +68,7 @@
         <source src="./assets/ambient.mp3" type="audio/mp3">
     </audio>
 
-        <div id="hue-overlay"></div>
+    <div id="hue-overlay"></div>
     
     <div id="music-controller-overlay">
         <div id="music-controller-trigger">
@@ -78,19 +79,18 @@
             <p id="track-artist">Track artist</p>
         </div>
         <div id="music-controller">
-        <input type="range" id="seek-slider" min="0" value="0" step="0.01">
-        <div id="track-duration-container">
-            <span id="current-time">0:00</span> <span id="duration">0:00</span>
-        </div>
-        
-        <div id="music-controller-buttons">
-            <button id="play-pause"></i></button>
+            <input type="range" id="seek-slider" min="0" value="0" step="0.01">
+            <div id="track-duration-container">
+                <span id="current-time">0:00</span> <span id="duration">0:00</span>
+            </div>
+            
+            <div id="music-controller-buttons">
+                <button id="play-pause"></i></button>
+            </div>
         </div>
         <div id="music-queue-container">
             <p>Up next</p>
-            <div id="music-queue">
-                
-            </div>
+            <div id="music-queue"></div>
         </div>
         <span id="time-override-text" style="opacity: 0.5;">time override: </span>
         <div id="time-override-container">
@@ -102,7 +102,12 @@
             <button onmousedown="setTimeOverride(6)" class="timeOverrideBtn">lateNight</button>
             <button onmousedown="setTimeOverride(0)" class="timeOverrideBtn">off</button>
         </div>
-        
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-trigger"></div>
+        <div style="background-color: black; color: #FFF; position: absolute; top: 0; left: 0; font-size: 2em; opacity: 0.5;">Chat is in beta</div>
+        <iframe src="https://iframe.chat/embed?chat=ishikaze" id="chattable"></iframe>
     </div>
     
     <script>
@@ -142,11 +147,49 @@
                 controllerTrigger.style.width = "45em"
             }
         }
+        controllerMouseCheck()
     </script>
 
-    <script src="./waves.js"></script>
-    <script src="./liquid.js"></script>
-    <script src="./dialogue.js"></script>
+    <script>
+        const chatOverlay = document.getElementById("chat-container");
+        const chatTrigger = document.getElementById("chat-trigger");
+
+        let chatOverlayOver = false;
+        let chatTriggerOver = false;
+
+        chatOverlay.addEventListener("mouseover", () => {
+            chatOverlayOver = true;
+            chatMouseCheck()
+        });
+
+        chatTrigger.addEventListener("mouseover", () => {
+            chatTriggerOver = true;
+            chatMouseCheck()
+        });
+
+        chatOverlay.addEventListener("mouseout", () => {
+            chatOverlayOver = false;
+            chatMouseCheck()
+        });
+
+        chatTrigger.addEventListener("mouseout", () => {
+            chatTriggerOver = false;
+            chatMouseCheck()
+        });
+
+
+        function chatMouseCheck() {
+            if (chatOverlayOver === true || chatTriggerOver === true){
+                chatOverlay.style.right = "0em"
+                chatTrigger.style.width = "2em"
+            } else {
+                chatOverlay.style.right = "-40em"
+                chatTrigger.style.width = "50em"
+            }
+        }
+        chatMouseCheck()
+    </script>
+
     <script>
         function welcomeMessage() {
             setTimeout(async () => {
@@ -171,8 +214,11 @@
                 log("")
                 controllerTrigger.style.backgroundColor = "#FFFFFF"
                 controllerTrigger.style.opacity = '0.5'
+                chatTrigger.style.backgroundColor = "#FFFFFF"
+                chatTrigger.style.opacity = '0.5'
                 await sleep(2000);
                 controllerTrigger.style.opacity = '0'
+                chatTrigger.style.opacity = '0'
             }, 3000);
             
         }
@@ -180,7 +226,16 @@
     <!-- <script src="./ShaderProgram.js"></script>
      <script src="./partWaves.js"></script>
      <script src="./lines.js"></script> -->
+    <script src="./waves.js"></script>
+    <script src="./liquid.js"></script>
+    <script src="./dialogue.js"></script>
     <script src="./loading.js"></script>
     <script src="./music.js"></script>
+    <script src="https://iframe.chat/scripts/main.min.js"></script>
+    <script>
+        chattable.initialize({
+            stylesheet: "chattable.css",
+        });
+    </script>
 </body>
 </html>

@@ -28,14 +28,21 @@ async function loadMin() {
     updateLoadingStatus("click anywhere to continue")
 }
 
-function closeLoading() {
+async function closeLoading() {
     console.log(loadingFinished)
     if (loadingFinished == false) return;
     const loadingPage = document.getElementById('loading-page');
-    loadingPage.style.display = 'none';
     playTrack();
     trackFadeIn();
     welcomeMessage();
+    loadingPage.style.transition = 'all 0.1s'
+    await sleep(50)
+    loadingPage.style.backgroundColor = '#FFF';
+    await sleep(50)
+    loadingPage.style.transition = 'all 1s'
+    await sleep(50)
+    loadingPage.style.pointerEvents = 'none'
+    loadingPage.style.opacity = 0
     playDialogue("welcome");
     ambient.volume = 0.5
     ambient.play()

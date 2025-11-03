@@ -11,6 +11,7 @@ let isIntro = true;
 let preloaded = false;
 let timeOverride = localStorage.getItem("timeOverride");
 let lastCheckedTimeOfDay;
+let logEnabled = false;
 
 const tracks = {
     default: {
@@ -550,6 +551,10 @@ function addNewTracks() {
 let logTimeout;
 
 function log(message) {
+    if (!logEnabled) {
+        debugPanel.style.pointerEvents = 'none'
+        return;
+    }
     debugPanel.innerHTML += `<br>> ${message}`;
     debugPanel.style.opacity = 1;
     if (logTimeout) clearTimeout(logTimeout);
