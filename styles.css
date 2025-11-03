@@ -319,6 +319,10 @@ path {
   opacity: 0.5;
 }
 
+#time-override-text {
+  color: #FFFFFF;
+}
+
 .timeOverrideBtn {
   background: rgba(255, 255, 255, 0.014);
   border-radius: 24px;
