@@ -428,18 +428,18 @@ path {
   }
 
   #music-controller-overlay {
-    
+    transform: scale(0.8) translateY(-60%) translateX(-15%);
   }
 
   #music-controller-trigger {
-  
+  transform: translateX(10%) translateY(50%);
 }
 
 #chat-container {
-    
+    transform: scale(0.8) translateY(-75%) translateX(15%);
   }
 
   #chat-trigger {
-  
+    transform: translateX(-10%);
   }
 }
