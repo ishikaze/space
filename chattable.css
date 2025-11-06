@@ -78,16 +78,14 @@ br {
  font-size: 1em;
  padding: 1em;
  width: 100%;
- border-radius: 16px;
  margin: 0;
  border: solid 1px rgba(255, 255, 255, 0.5);
+ border-radius: 0px;
 }
 #input:focus, #nameEntry:focus {
- border-radius: 16px;
 }
 #input:empty::before {
  content: "leave a message...";
- border-radius: 16px;
  color: #AAA;
 }
 a {
@@ -246,4 +244,77 @@ pre:has(>code){
   align-items: center;
   background-color: #00000081;
   color: #FFFFFF;
+  height: 100%;
 }
+
+#settingsMenu h2 {
+  font-size: 1.5em;
+}
+
+#settingsMenu p {
+  font-size: 1em;
+  width: auto;
+  display: flex;
+}
+
+#settingsMenu p label{
+  margin-left: auto;
+}
+
+#settingsMenu p label::after {
+  margin-right: auto;
+}
+
+#save {
+  cursor: pointer;
+  width: auto;
+  color: #FFFFFF;
+  background: rgba(114, 114, 114, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 1.25em;
+  border-radius: 16px;
+  padding: 1em;
+  text-decoration: none;
+  font-family: 'Playfair Display', serif;
+}
+
+#dltranscript {  
+  width: auto;
+  color: #FFFFFF;
+  background: rgba(114, 114, 114, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 1.25em;
+  border-radius: 16px;
+  padding: 1em;
+  margin-top: 1em;
+}
+
+#dltranscript a {
+text-decoration: none;
+color: #FFFFFF;
+font-size: 1.25em;
+}
+
+#settingsMenu #footer {
+  display: none;
+  opacity: 0;
+}
+
+#closeSettingsBtn {
+  position: absolute;
+  bottom: 1em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: auto;
+  color: #ffa8a8;
+  background: rgba(114, 114, 114, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 1.25em;
+  border-radius: 16px;
+  padding: 1em;
+  text-decoration: none;
+  font-family: 'Playfair Display', serif;
+}
+
+
