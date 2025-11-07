@@ -1,6 +1,6 @@
 let loadingFinished = false;
 let loadMinValue = 250
-let maxWaitTime = 20
+let maxWaitTime = 1
 let waitTime = 0
 
 function updateLoadingStatus(message) {
@@ -34,6 +34,7 @@ async function loadMin() {
             i = 100
         }
         await sleep(1000)
+        waitTime++
         if (maxWaitTime < waitTime) {
             updateLoadingStatus(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
             await sleep(5000)
