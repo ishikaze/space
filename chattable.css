@@ -338,8 +338,12 @@ font-size: 1.25em;
   height: 3em;
 }
 
+#footer {
+  display: none;
+}
+
 #scrollToBottom {
-  content: jump to latest message;
+  content: 'jump to latest message' !important;
 }
 
 

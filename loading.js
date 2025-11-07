@@ -1,6 +1,6 @@
 let loadingFinished = false;
 let loadMinValue = 250
-let maxWaitTime = 5
+let maxWaitTime = 10
 let waitTime = 0
 
 function updateLoadingStatus(message) {
