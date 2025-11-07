@@ -16,17 +16,25 @@ function showDialogue(toggle) {
     }
 }
 
+let scrollDialogue = false;
+
 async function updateDialogue(message) {
     showDialogue(false)
     await sleep(1000)
+    scrollDialogue = false
+    dialogueBox.scrollLeft = 0
     dialogueBox.innerHTML = message
     showDialogue(true)
 
-    await sleep(4500)
-    setInterval(() => {
-        dialogueBox.scrollLeft += 1
-    }, 1)
+    await sleep(1500)
+    scrollDialogue = true
 }
+
+setInterval(() => {
+        if (scrollDialogue) {
+            dialogueBox.scrollLeft += 2
+        } 
+    }, 1)
 
 function showSelections(value) {
     const elements = document.querySelectorAll('.selection'); 
