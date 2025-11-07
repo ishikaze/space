@@ -1,4 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+:root {
+  --notification-sfx: https://www.myinstants.com/media/sounds/mocor-os-keypad-sound.mp3;
+}
+
 @keyframes hovering {
  from {
    margin-bottom: 3px;
@@ -15,23 +20,30 @@ body, html {
     margin: 1em;
 }
 .allMessages {
+  border-bottom: 1px #ffffff33 solid;
  display: flex;
  flex-direction: column;
- gap: 0.5em;
- background: rgba(114, 114, 114, 0.2);
- border: 1px solid rgba(255, 255, 255, 0.5);
+ gap: 0.25em;
  font-size: 1.25em;
  font-weight: lighter;
- border-radius: 16px;
+ border-radius: 0px;
  margin: 0;
  line-height: 1.25em;
  position: relative;
  color: rgba(255, 255, 255, 1);
  width: 100%;
- padding: 1em;
+ padding-bottom: 1em;
  box-sizing: border-box;
  backdrop-filter: blur(6px);
  overflow: auto;
+ font-weight: 300;
+}
+.allMessages iframe {
+  width: auto;
+  height: auto;
+  border: none;
+  -ms-overflow-style: none; /* for Internet Explorer, Edge */
+  scrollbar-width: none; /* for Firefox */
 }
 .msgWrapper:nth-child(6n) {
     margin-top: 2em;
@@ -48,11 +60,11 @@ br {
 }
 .senderInfo {
  display: block;
- margin: 2px;
+ margin: 0.25em;
  font-family: 'Playfair Display', serif;
- font-weight: bold;
+ font-weight: 800;
  text-align: justify;
- font-size: 1em;
+ font-size: 1.25em;
  min-width: 1em;
  max-width: 100%;
  word-break: break-all;
@@ -94,12 +106,12 @@ a {
 #timestamp {
  color: rgba(255, 255, 255, 1);
  text-align: center;
- font-size: 0.5em;
+ font-size: 1em;
  margin: 0;
 }
 #timestamp:after {
     content: "\2934";
-    font-size: 12pt;
+    font-size: 1em;
     font-weight: bold;
 }
 .badge {
@@ -123,7 +135,7 @@ a {
  font-weight: bold;
  color: rgb(157, 203, 255);
  text-shadow: 0 0 3px rgb(0, 0, 0);
- animation: hueShift 120s linear infinite;
+ animation: hueShift 12s linear infinite;
 }
 .senderInfo:has(.mod) {
   font-family: Verdana;
@@ -158,12 +170,12 @@ blockquote {
  max-height: 15vh;
  overflow: hidden;
  cursor: default;
+ background: rgb(0, 0, 0);
+ border: 1px solid rgba(255, 255, 255, 0.5);
 }
 .pinned .allMessages {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgb(0, 0, 0);
   border-radius: 16px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(135, 201, 255, 0.31);
   padding: 1em;
 }
@@ -180,6 +192,7 @@ blockquote {
  width: 100%;
  height: 15vh;
  max-height: 15vh;
+ border-radius: 16px;
  animation: 500ms linear infinite alternate hovering;
 }
 .pinned:hover::before {
@@ -300,6 +313,10 @@ font-size: 1.25em;
   opacity: 0;
 }
 
+#settingsMenu hr {
+  display: none;
+}
+
 #closeSettingsBtn {
   position: absolute;
   bottom: 1em;
@@ -317,4 +334,12 @@ font-size: 1.25em;
   font-family: 'Playfair Display', serif;
 }
 
+.msgBody p img {
+  width: 3em;
+  height: 3em;
+}
+
+#scrollToBottom {
+  content: jump to latest message;
+}
 
