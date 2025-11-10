@@ -27,20 +27,49 @@ const tracks = {
                 artist: "Wisp X",
                 url: "./assets/music/default/aer.mp3",
                 startTimestamp: 0
-            }
-        ],
-        morning: [
-            {
-                name: "aer",
-                artist: "Wisp X",
-                url: "./assets/music/default/aer.mp3",
-                startTimestamp: 73
-            },
-            {
+            },            {
                 name: "Planet Express",
                 artist: "Ujico*",
                 url: "./assets/music/default/planetExpress.mp3",
                 startTimestamp: 112.5
+            },
+        ],
+        morning: [
+            {
+                name: "wish",
+                artist: "Aiobahn and somunia ",
+                url: "./assets/music/default/wish.mp3",
+                startTimestamp: 170
+            },
+            {
+                name: "Dawn",
+                artist: "Couple N",
+                url: "./assets/music/default/dawn.mp3",
+                startTimestamp: 115.5
+            },
+            {
+                name: "Hebi_OP",
+                artist: "Hebi",
+                url: "./assets/music/default/hebiOP.mp3",
+                startTimestamp: 130
+            },
+            {
+                name: "Sleeping World",
+                artist: "Kyatto",
+                url: "./assets/music/default/sleepingWorld.mp3",
+                startTimestamp: 118.5
+            },
+            {
+                name: "Treat",
+                artist: "Kyatto",
+                url: "./assets/music/default/treat.mp3",
+                startTimestamp: 102
+            },
+            {
+                name: "summer is over",
+                artist: "Snail's House and potsu",
+                url: "./assets/music/default/summerIsOver.mp3",
+                startTimestamp: 179
             }
         ],
         afternoon: [
@@ -73,6 +102,12 @@ const tracks = {
                 artist: "Stessie",
                 url: "./assets/music/default/whatIf.mp3",
                 startTimestamp: 160
+            },
+            {
+                name: "Deep Blue",
+                artist: "PSYQUI",
+                url: "./assets/music/default/deepBlue.mp3",
+                startTimestamp: 167
             }
         ],
         evening: [
@@ -227,6 +262,12 @@ const tracks = {
                 artist: "Matthewせいじ",
                 url: "./assets/music/default/theCore.mp3",
                 startTimestamp: 180.5
+            },
+            {
+                name: "Good night, Terra",
+                artist: "Lappy",
+                url: "./assets/music/default/goodNightTerra.mp3",
+                startTimestamp: 68
             }
         ],
         lateNight: [
@@ -243,22 +284,10 @@ const tracks = {
                 startTimestamp: 98.5
             },
             {
-                name: "Myths You Forgot",
-                artist: "Camellia and Toby Fox",
-                url: "./assets/music/default/mythsYouForgot.mp3",
-                startTimestamp: 190
-            },
-            {
                 name: "Babaroque",
                 artist: "cYsmix",
                 url: "./assets/music/default/babaroque.mp3",
                 startTimestamp: 201
-            },
-            {
-                name: "Good night, Terra",
-                artist: "Lappy",
-                url: "./assets/music/default/goodNightTerra.mp3",
-                startTimestamp: 68
             },
             {
                 name: "Telling The World",
@@ -291,16 +320,10 @@ const tracks = {
                 startTimestamp: 117.6
             },
             {
-                name: "Secret Illumination",
-                artist: "Yooh",
-                url: "./assets/music/default/secretIllumination.mp3",
-                startTimestamp: 97
-            },
-            {
-                name: "Can you hear me?",
-                artist: "linear ring",
-                url: "./assets/music/default/canYouHearMe.mp3",
-                startTimestamp: 109
+                name: "Beyond the Edge",
+                artist: "Xyris and 花隈千冬",
+                url: "./assets/music/default/beyondTheEdge.mp3",
+                startTimestamp: 52.5
             },
             {
                 name: "Glacier",
