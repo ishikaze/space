@@ -528,6 +528,7 @@ async function playTrack() {
         isIntro = false
     }
     updateQueue()
+    updateTitle()
     log(`starting track at ${timestamp}`);
     player.currentTime = timestamp;
     player.play();
@@ -805,4 +806,20 @@ function updateQueue() {
     queue.appendChild(div);
     queue.appendChild(divider)
   }
+}
+
+function updateTitle() {
+    const currentTrack = playlist[0]
+    console.log(currentTrack)
+
+    if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title: `${currentTrack.name}`,
+        artist: `${currentTrack.artist}`,
+        album: ``, //soon
+        artwork: [
+            { src: 'https://ishikaze.space/assets/img/icons/star256',   sizes: '256x256',   type: 'image/png' },
+        ]
+    });
+    }
 }
