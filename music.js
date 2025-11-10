@@ -818,7 +818,7 @@ function updateTitle() {
         artist: `${currentTrack.artist}`,
         album: ``, //soon
         artwork: [
-            { src: 'https://ishikaze.space/assets/img/icons/star256',   sizes: '256x256',   type: 'image/png' },
+            { src: 'https://ishikaze.space/assets/img/icons/star256.png',   sizes: '256x256',   type: 'image/png' },
         ]
     });
     }
