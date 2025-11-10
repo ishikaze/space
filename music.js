@@ -528,10 +528,21 @@ async function playTrack() {
         isIntro = false
     }
     updateQueue()
-    updateTitle()
     log(`starting track at ${timestamp}`);
     player.currentTime = timestamp;
-    player.play();
+    let startPlayPromise = player.play();
+
+    if (startPlayPromise !== undefined) {
+    startPlayPromise.then(() => {
+        updateTitle()
+    }).catch(error => {
+        if (error.name === "NotAllowedError") {
+        console.error("autoplay was prevented by the browser.");
+        } else {
+        console.error("error during audio playback:", error);
+        }
+    });
+    }
 }
 
 function addNewTracks() {
@@ -810,8 +821,7 @@ function updateQueue() {
 
 function updateTitle() {
     const currentTrack = playlist[0]
-    console.log(currentTrack)
-
+    
     if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
         title: `${currentTrack.name}`,
