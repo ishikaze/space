@@ -16,7 +16,7 @@
     </div>
 
     <p id='debug'>
-        Ishikaze's space! yes, the one that makes music. come chill and hangout with us!
+        Ishikaze's space! yes, the one that makes music. come chill and hangout with us! 
     </p>
 
     <svg>
@@ -113,7 +113,11 @@
         <div style="background-color: black; color: #FFF; position: absolute; top: 0; left: 0; font-size: 2em; opacity: 0.2; z-index: 5;">Chat is in beta</div>
         <iframe src="https://iframe.chat/embed?chat=ishikaze" id="chattable"></iframe>
     </div>
-    
+
+    <div id="lyrics-container">
+        <p class="lyric-line" style="filter: url(#liquid-filter);" id="line-1"></p>
+        <p class="lyric-line" style="filter: url(#liquid-filter);" id="line-2"></p>
+    </div>
 
     <!-- <script src="./ShaderProgram.js"></script>
      <script src="./partWaves.js"></script>
@@ -123,11 +127,19 @@
     <script src="./dialogue.js"></script>
     <script src="./loading.js"></script>
     <script src="./music.js"></script>
+    <script src="./lyrics.js"></script>
+    <script src="./lyricsParser.js"></script>
+    
     <script src="https://iframe.chat/scripts/main.min.js"></script>
     <script>
-        chattable.initialize({
-            stylesheet: "chattable.css",
-        });
+        try {
+            chattable.initialize({
+                stylesheet: "chattable.css",
+            });
+        } catch (error) {
+            console.log(error)
+        }
+        
     </script>
     <script>
         const myIframe = document.getElementById('chattable');

@@ -535,6 +535,8 @@ async function playTrack() {
     if (startPlayPromise !== undefined) {
     startPlayPromise.then(() => {
         updateTitle()
+        playLyrics(toPlay.url)
+        
     }).catch(error => {
         if (error.name === "NotAllowedError") {
         console.error("autoplay was prevented by the browser.");
@@ -831,5 +833,24 @@ function updateTitle() {
             { src: 'https://ishikaze.space/assets/img/icons/star256.png',   sizes: '256x256',   type: 'image/png' },
         ]
     });
+    }
+}
+
+function playLyrics(url) {
+    try {
+        const lrcFileData = lyrics[url.split('/').pop().split('.').shift()];
+
+        const audioPlayer = document.getElementById('player');
+        const lyricsContainer = document.getElementById('lyrics-container');
+        const parsedLyrics = parseLRC(lrcFileData);
+
+        if (audioPlayer && parsedLyrics.length > 0) {
+        setupLyricsPlayer(parsedLyrics, audioPlayer, lyricsContainer);
+        } else if (!audioPlayer) {
+            console.error("Audio element with id 'player' not found!");
+        }
+        console.log("Lyrics loaded for track:", toPlay.name);
+    } catch (error) {
+        console.log("No lyrics available for this track.");
     }
 }

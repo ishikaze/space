@@ -46,6 +46,25 @@ body {
     color: #FFF;
 }
 
+#lyrics-container {
+    bottom: 2em;
+    width: 100%;
+    text-align: center;
+    color: #FFFFFF;
+    position: fixed;
+    font-size: 2em;
+    z-index: 100;
+  }
+
+  .lyric-line {
+    opacity: 0;
+    transition: opacity 0.2s linear; /* CSS transition for smooth fade */
+  }
+
+  .lyric-line.active {
+    opacity: 1;
+  }
+
 @keyframes hueShift {
   0% {
     filter: hue-rotate(0deg) saturate(0.75);
