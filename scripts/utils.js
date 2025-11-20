@@ -51,4 +51,17 @@ function checkPopups() {
     }
 }
 
+function reloadScript(scriptId, scriptSrc) {
+    const oldScript = document.getElementById(scriptId);
+    if (oldScript) {
+        oldScript.parentNode.removeChild(oldScript);
+    }
+
+    const newScript = document.createElement('script');
+    newScript.src = scriptSrc;
+    newScript.id = scriptId;
+    document.head.appendChild(newScript);
+}
+
+
 setInterval(checkPopups, 100);

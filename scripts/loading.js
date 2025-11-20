@@ -39,7 +39,7 @@ async function loadMin() {
         }
     }
 
-    for (let a = 1; a < 30; a++) {
+    for (let a = 1; a < 10; a++) {
         updateLoadingStatus(`Waiting for DOM${'.'.repeat(a)}`);
         if (document.readyState === 'complete') {
             loadingFinished = true;
@@ -49,7 +49,7 @@ async function loadMin() {
             a = 100
         }
         console.log(a)
-        if (a === 29) {
+        if (a === 9) {
             updateLoadingStatus('Loading error, Please refresh the page!');
             defaultPopup(`ERROR! \nloading timeout, you are offline or your connection is too slow! \nPlease refresh the page to try again.`);
         }

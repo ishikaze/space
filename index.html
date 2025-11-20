@@ -134,7 +134,7 @@
     <script src="./scripts/lyrics.js"></script>
     <script src="./scripts/lyricsParser.js"></script>
     
-    <script src="https://iframe.chat/scripts/main.min.js"></script>
+    <script id="chattableScript" src="https://iframe.chat/scripts/main.min.js"></script>
     <script>
         try {
             chattable.initialize({
@@ -152,13 +152,18 @@
         async function reloadIframe() {
             await sleep(5000)
             console.log('Network back online. Reloading iframe...');
-            myIframe.src = initialSrc; 
-            chattable.initialize({
-                stylesheet: "chattable.css",
+            reloadScript('chattableScript', 'https://iframe.chat/scripts/main.min.js').then(() => {
+                console.log('Chat script reloaded.');
+                myIframe.src = initialSrc; 
+                chattable.initialize({
+                    stylesheet: "chattable.css",
+                });
+            }).catch((error) => {
+                console.error('Error reloading chat script:', error);
             });
         }
 
-        window.addEventListener('online', reloadIframe());
+        window.addEventListener('online', reloadIframe);
 
         window.addEventListener('offline', function() {
             console.log('Network disconnected.');
