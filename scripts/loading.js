@@ -1,6 +1,6 @@
 let loadingFinished = false;
 let loadMinValue = 250
-let maxWaitTime = 0
+let maxWaitTime = 10
 let waitTime = 0
 
 function updateLoadingStatus(message) {
@@ -29,23 +29,33 @@ async function loadMin() {
             i = 0
         }
         randomTime = Math.random() * loadMinValue
-        updateLoadingStatus(`Connecting to chat${dots}`);
-        if (document.readyState === 'complete') {
-            i = 100
-        }
+        updateLoadingStatus(`[${waitTime}/${maxWaitTime}] Connecting to chat${dots}`);
+        
         await sleep(1000)
         waitTime++
         if (maxWaitTime < waitTime) {
-            updateLoadingStatus(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
-            await sleep(5000)
-            i = 100
+            defaultPopup(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
+            i = 99
         }
     }
 
-    loadingFinished = true;
-    const loadingHeader = document.getElementById('loading-header');
-    loadingHeader.innerHTML = 'Loaded!';
-    updateLoadingStatus("click anywhere to continue (sound warning!)")
+    for (let a = 1; a < 30; a++) {
+        updateLoadingStatus(`Waiting for DOM${'.'.repeat(a)}`);
+        if (document.readyState === 'complete') {
+            loadingFinished = true;
+            const loadingHeader = document.getElementById('loading-header');
+            loadingHeader.innerHTML = 'Loaded!';
+            updateLoadingStatus("click anywhere to continue (sound warning!)")
+            a = 100
+        }
+        console.log(a)
+        if (a === 29) {
+            updateLoadingStatus('Loading error, Please refresh the page!');
+            defaultPopup(`ERROR! \nloading timeout, you are offline or your connection is too slow! \nPlease refresh the page to try again.`);
+        }
+    await sleep(1000);
+    }
+    
 }
 
 async function closeLoading() {
@@ -54,7 +64,6 @@ async function closeLoading() {
     const loadingPage = document.getElementById('loading-page');
     playTrack();
     trackFadeIn();
-    welcomeMessage();
     loadingPage.style.transition = 'all 0.1s'
     await sleep(50)
     loadingPage.style.backgroundColor = '#FFF';

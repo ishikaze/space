@@ -438,10 +438,6 @@ function setTimeOverride(override) {
     document.getElementById("time-override-text").innerHTML = 'time override: ' + timeOverride
 }
 
-const sleep = (milliseconds) => {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
-};
-
 function updateTime() {
     const now = new Date();
     hour = now.getHours();
