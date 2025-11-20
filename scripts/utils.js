@@ -64,4 +64,4 @@ function reloadScript(scriptId, scriptSrc) {
 }
 
 
-setInterval(checkPopups, 100);
+setInterval(checkPopups, 250);

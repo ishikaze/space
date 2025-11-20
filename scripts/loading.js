@@ -1,6 +1,6 @@
 let loadingFinished = false;
 let loadMinValue = 250
-let maxWaitTime = 10
+let maxWaitTime = 0
 let waitTime = 0
 
 function updateLoadingStatus(message) {
@@ -30,31 +30,25 @@ async function loadMin() {
         }
         randomTime = Math.random() * loadMinValue
         updateLoadingStatus(`[${waitTime}/${maxWaitTime}] Connecting to chat${dots}`);
-        
         await sleep(1000)
         waitTime++
-        if (maxWaitTime < waitTime) {
-            defaultPopup(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
-            i = 99
-        }
-    }
-
-    for (let a = 1; a < 10; a++) {
-        updateLoadingStatus(`Waiting for DOM${'.'.repeat(a)}`);
         if (document.readyState === 'complete') {
             loadingFinished = true;
             const loadingHeader = document.getElementById('loading-header');
             loadingHeader.innerHTML = 'Loaded!';
             updateLoadingStatus("click anywhere to continue (sound warning!)")
-            a = 100
+            i = 100
         }
-        console.log(a)
-        if (a === 9) {
-            updateLoadingStatus('Loading error, Please refresh the page!');
-            defaultPopup(`ERROR! \nloading timeout, you are offline or your connection is too slow! \nPlease refresh the page to try again.`);
+        if (maxWaitTime < waitTime) {
+            defaultPopup(`WARNING: can't connect to chat server in ${maxWaitTime} seconds! the server may be down or you may be offline, the chat will connect automatically if you're back online.`)
+            loadingFinished = true;
+            const loadingHeader = document.getElementById('loading-header');
+            loadingHeader.innerHTML = 'Loaded!';
+            updateLoadingStatus("click anywhere to continue (sound warning!)")
+            i = 100
         }
-    await sleep(1000);
     }
+
     
 }
 
@@ -76,4 +70,5 @@ async function closeLoading() {
     ambient.volume = 0.5
     ambient.play()
     playLyrics('./assets/music/default/dummy.mp3');
+    console.log("Loading page closed");
 }

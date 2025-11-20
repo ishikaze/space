@@ -54,6 +54,7 @@ body {
     position: fixed;
     font-size: 2em;
     z-index: 100;
+    pointer-events: none;
   }
 
   .lyric-line {
@@ -110,6 +111,7 @@ body {
   padding: 0.5em 1em;
   font-size: 1em;
   color: #FFFFFF;
+  cursor: pointer;
 }
 
 @keyframes hueShift {
