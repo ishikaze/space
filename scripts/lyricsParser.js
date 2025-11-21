@@ -24,11 +24,10 @@ function parseLRC(lrcContent) {
 }
 
 /**
- * Initializes and controls the lyric display synchronized with an audio element.
- * @param {Array<Object>} lyrics The parsed lyrics array.
- * @param {HTMLAudioElement} audioEl The audio element to sync with.
- * @param {HTMLElement} container The container for the lyric lines.
- * @returns {Function} A cleanup function to remove the attached event listeners.
+ * @param {Array<Object>} lyrics 
+ * @param {HTMLAudioElement} audioEl 
+ * @param {HTMLElement} container 
+ * @returns {Function} 
  */
 function setupLyricsPlayer(lyrics, audioEl, container) {
   const lineElements = [
@@ -37,13 +36,12 @@ function setupLyricsPlayer(lyrics, audioEl, container) {
   ];
   const lineTimeouts = [null, null];
   let currentLineSlot = 0;
-  let lastLyricIndex = 0;
+  let lastLyricIndex = -1;
 
-  // --- Constants for calculating display time ---
-  const SECONDS_PER_LATIN_CHARACTER = 0.25; // Original value for English, etc.
-  const SECONDS_PER_CJK_CHARACTER = 0.75;   // Increased time for CJK characters
-  const MINIMUM_DELAY = 1000; // 1 second minimum display time
-  const CJK_REGEX = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/; // Regex to detect Japanese, Chinese, and full-width characters
+  const SECONDS_PER_LATIN_CHARACTER = 0.25;
+  const SECONDS_PER_CJK_CHARACTER = 0.75;
+  const MINIMUM_DELAY = 1000;
+  const CJK_REGEX = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/;
 
   function handleTimeUpdate() {
     const currentTime = audioEl.currentTime;
@@ -55,40 +53,52 @@ function setupLyricsPlayer(lyrics, audioEl, container) {
     }
 
     if (newLyricIndex !== -1 && newLyricIndex !== lastLyricIndex) {
-      const targetLine = lineElements[currentLineSlot];
       const newText = lyrics[newLyricIndex].text;
 
-      // --- NEW: Dynamic delay calculation based on content ---
+      let targetSlot;
+      const line1Active = lineElements[0].classList.contains('active');
+      const line2Active = lineElements[1].classList.contains('active');
+
+      if (!line1Active) {
+        targetSlot = 0;
+      } else if (!line2Active) {
+        targetSlot = 1;
+      } else {
+        targetSlot = currentLineSlot;
+      }
+
+      const targetLine = lineElements[targetSlot];
+
       let calculatedDelay = 0;
       for (const char of newText) {
-          if (CJK_REGEX.test(char)) {
-              calculatedDelay += SECONDS_PER_CJK_CHARACTER * 1000; // Use CJK timing
-          } else {
-              calculatedDelay += SECONDS_PER_LATIN_CHARACTER * 1000; // Use standard timing
-          }
+        if (CJK_REGEX.test(char)) {
+          calculatedDelay += SECONDS_PER_CJK_CHARACTER * 1000;
+        } else {
+          calculatedDelay += SECONDS_PER_LATIN_CHARACTER * 1000;
+        }
       }
       const finalDelay = Math.max(calculatedDelay, MINIMUM_DELAY);
-      // --- End of new calculation ---
 
-      clearTimeout(lineTimeouts[currentLineSlot]);
-
-      const updateAndFadeIn = () => {
+      clearTimeout(lineTimeouts[targetSlot]);
+      const performUpdateAndFadeIn = () => {
         targetLine.textContent = newText;
-        targetLine.classList.add('active');
-        lineTimeouts[currentLineSlot] = setTimeout(() => {
-          targetLine.classList.remove('active');
-        }, finalDelay);
+        
+        setTimeout(() => {
+          targetLine.classList.add('active');
+          lineTimeouts[targetSlot] = setTimeout(() => {
+            targetLine.classList.remove('active');
+          }, finalDelay);
+        }, 10);
       };
-
       if (targetLine.classList.contains('active')) {
-        targetLine.addEventListener('transitionend', updateAndFadeIn, { once: true });
-        targetLine.classList.remove('active');
+        targetLine.addEventListener('transitionend', performUpdateAndFadeIn, { once: true });
+        targetLine.classList.remove('active'); 
       } else {
-        updateAndFadeIn();
+        performUpdateAndFadeIn();
       }
 
       lastLyricIndex = newLyricIndex;
-      currentLineSlot = 1 - currentLineSlot;
+      currentLineSlot = 1 - targetSlot;
     }
   }
 
@@ -96,26 +106,26 @@ function setupLyricsPlayer(lyrics, audioEl, container) {
     const currentTime = audioEl.currentTime;
     let currentLyricIndex = -1;
     for (let i = 0; i < lyrics.length; i++) {
-        if (currentTime >= lyrics[i].time) {
-            currentLyricIndex = i;
-        }
+      if (currentTime >= lyrics[i].time) {
+        currentLyricIndex = i;
+      }
     }
 
     lineElements.forEach(line => {
-        line.classList.remove('active');
-        line.textContent = '';
+      line.classList.remove('active');
+      line.textContent = '';
     });
     clearTimeout(lineTimeouts[0]);
     clearTimeout(lineTimeouts[1]);
 
     if (currentLyricIndex !== -1) {
-        lineElements[0].textContent = lyrics[currentLyricIndex].text;
-        lineElements[0].classList.add('active');
-        lastLyricIndex = currentLyricIndex;
-        currentLineSlot = 1;
+      lineElements[0].textContent = lyrics[currentLyricIndex].text;
+      lineElements[0].classList.add('active');
+      lastLyricIndex = currentLyricIndex;
+      currentLineSlot = 1;
     } else {
-        lastLyricIndex = -1;
-        currentLineSlot = 0;
+      lastLyricIndex = -1;
+      currentLineSlot = 0;
     }
   }
 
