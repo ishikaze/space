@@ -15,21 +15,42 @@ body {
     background-color: #000000;
 }
 
-#debug {
+#console {
     position: fixed;
     bottom: 0;
-    right: 0;
-    background-color: rgba(0,0,0,0.5);
-    color: white;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    max-height: 100%;
+    overflow-y: scroll;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    font-family: monospace;
+    font-size :1em;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+}
+
+#console-log {
+  position: absolute;
+  bottom: 2em;
+  padding: 1em;
+    display: flex;
+    flex-direction: column;
+}
+
+#console input {
+  position: fixed;
+  bottom: 0;
+    width: 100%;
     padding: 10px;
+    border: none;
+    outline: none;
+    background-color: #22222200;
+    color: #ffffff;
     font-family: monospace;
     font-size: 14px;
-    z-index: 1000;
-    opacity: 0;
-    transition: all 0.5s ease-in-out;
-    max-height: 20vh;
-    overflow-y: scroll;
-    scroll-behavior: smooth;
 }
 
 #loading-page {
@@ -83,7 +104,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  transform-origin: center center; /* Add this line */
+  transform-origin: center center;
   background: rgb(0, 0, 0);
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -99,6 +120,23 @@ body {
   gap: 1em;
   font-size: 1.5em;
   color: #FFFFFF;
+}
+
+.popup ul {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8em;
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.popup hr {
+  width: 50%;
+  border: 0;
+  margin: 0.5em auto;
+  height: 0.05em;
+  background-color: rgba(255, 255, 255, 0.31);
 }
 
 .popup button {
@@ -357,7 +395,7 @@ path {
   border-radius: 16px;
   padding: 0 1em;
   margin: 1em 0;
-  max-height: 18em;
+  max-height: 28em;
   overflow-y: scroll;
   scrollbar-width: none;
 }
@@ -482,23 +520,6 @@ path {
   padding: 1em;
   overflow: hidden;
 }
-
-  #debug {
-    position: fixed;
-    top: 0;
-    right: 0;
-    background-color: rgba(0,0,0,0.5);
-    color: white;
-    padding: 10px;
-    font-family: monospace;
-    font-size: 10px;
-    z-index: 1000;
-    opacity: 0;
-    transition: all 0.5s ease-in-out;
-    max-height: 30vh;
-    overflow-y: scroll;
-    pointer-events: none;
-  }
 
   #music-controller-overlay {
     transform: scale(0.8) translateY(-60%) translateX(-15%);

@@ -5,12 +5,16 @@ const sleep = (milliseconds) => {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 };
 
+setInterval(() => {
+  document.getElementById('main-container').scrollIntoView({ behavior: 'smooth' });
+}, 5000);
+
 function defaultPopup(message) {
     const popup = document.createElement('div');
     popup.className = 'popup';
 
     const messageP = document.createElement('p');
-    messageP.innerText = message;
+    messageP.innerHTML = message;
 
     const closeButton = document.createElement('button');
     closeButton.className = 'popup-close'; 

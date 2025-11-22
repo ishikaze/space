@@ -119,7 +119,6 @@ function getNewTrack() {
     }
 
     log(`time of day determined: ${timeOfDay}`);
-    document.getElementById("time-override-text").innerHTML = 'time override: ' + timeOverride
 
     currentAvailableTracks = useTrackList[timeOfDay];
     return;

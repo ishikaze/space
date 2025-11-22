@@ -18,6 +18,11 @@
         <p id="loading-status"></p>
     </div>
 
+    <div id="console">
+        <div id="console-log"></div>
+        <input type="text" id="console-input" placeholder="Enter command...">
+    </div>
+
     <p id='debug'>
         Ishikaze's space! yes, the one that makes music. come chill and hangout with us! 
     </p>
@@ -99,16 +104,6 @@
             <p>Up next</p>
             <div id="music-queue"></div>
         </div>
-        <span id="time-override-text" style="opacity: 0.5;">time override: </span>
-        <div id="time-override-container">
-            <button onmousedown="setTimeOverride(1)" class="timeOverrideBtn">earlyMorning</button>
-            <button onmousedown="setTimeOverride(2)" class="timeOverrideBtn">morning</button>
-            <button onmousedown="setTimeOverride(3)" class="timeOverrideBtn">afternoon</button>
-            <button onmousedown="setTimeOverride(4)" class="timeOverrideBtn">evening</button>
-            <button onmousedown="setTimeOverride(5)" class="timeOverrideBtn">night</button>
-            <button onmousedown="setTimeOverride(6)" class="timeOverrideBtn">lateNight</button>
-            <button onmousedown="setTimeOverride(0)" class="timeOverrideBtn">off</button>
-        </div>
     </div>
 
     <div id="chat-container">
@@ -134,6 +129,8 @@
     <script src="./scripts/music.js"></script>
     <script src="./scripts/lyrics.js"></script>
     <script src="./scripts/lyricsParser.js"></script>
+    <script src="./scripts/console.js"></script>
+    <script src="./scripts/versions.js"></script>
     
     <script id="chattableScript" src="https://iframe.chat/scripts/main.min.js"></script>
     <script>

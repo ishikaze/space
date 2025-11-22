@@ -1,6 +1,6 @@
 let loadingFinished = false;
 let loadMinValue = 250
-let maxWaitTime = 0
+let maxWaitTime = 10
 let waitTime = 0
 
 function updateLoadingStatus(message) {
@@ -69,6 +69,5 @@ async function closeLoading() {
     playDialogue("welcome");
     ambient.volume = 0.5
     ambient.play()
-    playLyrics('./assets/music/default/dummy.mp3');
     console.log("Loading page closed");
 }
