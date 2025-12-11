@@ -62,8 +62,7 @@
         <div id="selection-container"> 
             <h1 id="dialogue" class="float-text" style="filter: url(#liquid-filter);"></h1>
             <p class="float-text selection" style="filter: url(#liquid-filter);" onclick="hideDialogue()">Hide this dialogue</p>
-            <p class="float-text selection" style="filter: url(#liquid-filter);" onclick="playDialogue('musicGuide')">Can I control the music?</p>
-            <p class="float-text selection" style="filter: url(#liquid-filter);" onclick="playDialogue('chatGuide')">Is there a chat?</p>
+            <p class="float-text selection" style="filter: url(#liquid-filter);" onclick="playDialogue('siteGuide')">What is there to do?</p>
         </div>
         
 
@@ -83,9 +82,7 @@
     <div id="hue-overlay"></div>
     
     <div id="music-controller-overlay">
-        <div id="music-controller-trigger">
             <span></span>
-        </div>
         <div id="music-info-container">
             <h4 id="track-name">Track name</h4>
             <p id="track-artist">Track artist</p>
@@ -104,17 +101,35 @@
             <p>Up next</p>
             <div id="music-queue"></div>
         </div>
-    </div>
-
-    <div id="chat-container">
-        <div id="chat-trigger"></div>
-        <div style="background-color: black; color: #FFF; position: absolute; top: 0; left: 0; font-size: 2em; opacity: 0.2; z-index: 5;">Chat is in beta</div>
-        <iframe src="https://iframe.chat/embed?chat=ishikaze" id="chattable"></iframe>
+        <div id="music-close-button" onclick="dockToggle('music')"><i class="fa-solid fa-caret-left"></i></div>
     </div>
 
     <div id="lyrics-container">
         <p class="lyric-line" style="filter: url(#liquid-filter);" id="line-1"></p>
         <p class="lyric-line" style="filter: url(#liquid-filter);" id="line-2"></p>
+    </div>
+
+    <div id="apps-container">
+        <div id="dock">
+            <div class="dock-button" onclick="moveDock('left')"><i class="fa-solid fa-caret-left"></i></div>
+            <div class="dock-item" id="music-controller-icon" onclick="dockToggle('music')">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="dock-item" id="about-me" style="display: none;">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="dock-item" id="chat-icon" onclick="dockToggle('chat')">
+                <i class="fa-solid fa-message"></i>
+            </div>
+            <div class="dock-button" onclick="moveDock('right')"><i class="fa-solid fa-caret-right"></i></div>
+        </div>
+
+        <div id="chat-container">
+            <div id="chat">
+                <iframe src="./chat/"></iframe>
+            </div>
+            <div class="close-button" onclick="dockToggle('chat')"><i class="fa-solid fa-xmark"></i></div>
+        </div>
     </div>
 
     <!-- <script src="./ShaderProgram.js"></script>
@@ -130,56 +145,10 @@
     <script src="./scripts/lyrics.js"></script>
     <script src="./scripts/lyricsParser.js"></script>
     <script src="./scripts/console.js"></script>
+    <script src="./scripts/dock.js"></script>
     <script src="./scripts/versions.js"></script>
-    
-    <script id="chattableScript" src="https://iframe.chat/scripts/main.min.js"></script>
-    <script>
-        try {
-            chattable.initialize({
-                stylesheet: "chattable.css",
-            });
-        } catch (error) {
-            console.log(error)
-        }
-        
-    </script>
-    <script>
-        const myIframe = document.getElementById('chattable');
-        const initialSrc = myIframe.src; 
 
-        async function reloadIframe() {
-            await sleep(5000)
-            console.log('Network back online. Reloading iframe...');
-            reloadScript('chattableScript', 'https://iframe.chat/scripts/main.min.js').then(() => {
-                console.log('Chat script reloaded.');
-                myIframe.src = initialSrc; 
-                chattable.initialize({
-                    stylesheet: "chattable.css",
-                });
-            }).catch((error) => {
-                console.error('Error reloading chat script:', error);
-            });
-        }
-
-        window.addEventListener('online', reloadIframe);
-
-        window.addEventListener('offline', function() {
-            console.log('Network disconnected.');
-        });
-
-        function checkAndReloadIfEmpty() {
-            try {
-                if (myIframe.contentDocument && myIframe.contentDocument.body.children.length === 0) {
-                    console.log('Iframe appears empty. Reloading...');
-                    reloadIframe();
-                }
-            } catch (e) {
-                console.log('Cannot access iframe content due to cross-origin restrictions, relying solely on network events.');
-                reloadIframe();
-            }
-        }
-    </script>
-    <script>
+    <!-- <script>
         const controllerOverlay = document.getElementById("music-controller-overlay");
         const controllerTrigger = document.getElementById("music-controller-trigger");
 
@@ -257,40 +226,7 @@
             }
         }
         chatMouseCheck()
-    </script>
+    </script> -->
 
-    <script>
-        function welcomeMessage() {
-            setTimeout(async () => {
-                log("")
-                await sleep(50);
-                log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
-                await sleep(50);
-                log("")
-                await sleep(50);
-                log("[3/11/2025]");        
-                await sleep(50);
-                log("* Finally! Afternoon music!");  
-                await sleep(50);
-                log("* More late night music and some new night music");          
-                await sleep(50);
-                log("* Fixed a few issues"); 
-                await sleep(50);   
-                log("")
-                await sleep(50);
-                log("⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦⋆｡°✩₊ °✦ ‧  ‧ ₊ ˚✧₊ °✦")
-                await sleep(50);
-                log("")
-                controllerTrigger.style.backgroundColor = "#FFFFFF"
-                controllerTrigger.style.opacity = '0.5'
-                chatTrigger.style.backgroundColor = "#FFFFFF"
-                chatTrigger.style.opacity = '0.5'
-                await sleep(2000);
-                controllerTrigger.style.opacity = '0'
-                chatTrigger.style.opacity = '0'
-            }, 3000);
-            
-        }
-    </script>
 </body>
 </html>

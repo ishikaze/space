@@ -11,6 +11,17 @@ const updates = [
             <li>updates alerts! from now on, you'll get a new popup on startup for changes that has been made since the last time you were here!</li>
         </ul>
         `
+    },
+    {
+        version: '1.01',
+        description: `11 December 2025  Update! <br> <br>
+        <ul>
+            <li>System overhaul, everything is now accessible via the dock (hover middle bottom)</li>
+            <li>New chat service ran by yours truly, account is now required</li>
+            <li>New game and editor demo, I wonder where it is ;)</li>
+            <li>Huge mobile update</li>
+        </ul>
+        `
     }
 ]
 

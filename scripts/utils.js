@@ -9,6 +9,8 @@ setInterval(() => {
   document.getElementById('main-container').scrollIntoView({ behavior: 'smooth' });
 }, 5000);
 
+document.getElementById('main-container').scrollIntoView({ behavior: 'smooth' });
+
 function defaultPopup(message) {
     const popup = document.createElement('div');
     popup.className = 'popup';

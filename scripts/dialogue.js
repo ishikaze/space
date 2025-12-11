@@ -96,6 +96,21 @@ async function playDialogue(id) {
         await sleep(2000)
         showSelections()
         break;
+    case "siteGuide":
+        showSelections(false)
+        await sleep(500)
+        updateDialogue("You might have missed it,")
+        await sleep(3000)
+        updateDialogue("But there's a dock at the bottom of the screen!")
+        await sleep(6000)
+        updateDialogue("Hover your mouse in the middle-bottom area of your screen.")
+        await sleep(7000)
+        updateDialogue("Or click there if you're on mobile!")
+        await sleep(5000)
+        updateDialogue("Need anything else?")
+        await sleep(2000)
+        showSelections(true)
+        break;
     case "hideDialogue":
         showSelections(false)
         await sleep(1000)

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scriptable Audio Visualizer & Editor</title>
+    <style>
+        body { margin: 0; background: #111; color: #eee; font-family: monospace; overflow: hidden; display: flex; height: 100vh; }
+        
+        /* Layout */
+        #canvas-container { flex-grow: 1; position: relative; background: #000; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        #editor-panel { width: 400px; background: #222; display: flex; flex-direction: column; border-left: 1px solid #444; z-index: 10; }
+        
+        /* Controls */
+        .controls { padding: 10px; background: #333; border-bottom: 1px solid #444; }
+        .row { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
+        input[type="file"] { width: 100%; }
+        input[type="number"], input[type="text"] { background: #111; border: 1px solid #555; color: white; padding: 4px; width: 60px; }
+        button { background: #444; color: white; border: 1px solid #666; cursor: pointer; padding: 5px 10px; }
+        button:hover { background: #666; }
+        
+        /* Script Editor */
+        #script-area { flex-grow: 1; background: #151515; color: #aaffaa; border: none; resize: none; padding: 10px; font-family: 'Consolas', monospace; font-size: 12px; outline: none; white-space: pre; overflow: auto; }
+        
+        /* Timeline */
+        #timeline-container { position: absolute; bottom: 0; left: 0; right: 400px; height: 50px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; z-index: 5; }
+        #seek-bar { width: 100%; cursor: pointer; }
+        #time-display { width: 100px; text-align: right; margin-left: 10px; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- VISUALIZER AREA -->
+    <div id="canvas-container">
+        <canvas id="vizCanvas"></canvas>
+        <div id="timeline-container">
+            <button id="playBtn">Play</button>
+            <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.01">
+            <span id="time-display">0:00</span>
+        </div>
+    </div>
+
+    <!-- EDITOR AREA -->
+    <div id="editor-panel">
+        <div class="controls">
+            <div class="row">
+                <strong>Audio Source:</strong>
+                <input type="file" id="audioFile" accept="audio/*">
+            </div>
+            <div class="row">
+                <label>BPM:</label> <input type="number" id="bpmInp" value="128">
+                <button id="applyScriptBtn">Apply Script</button>
+                <button id="downloadScriptBtn">Save JSON</button>
+            </div>
+            <div class="row">
+                <small>Edit JSON below. Times are in seconds.</small>
+            </div>
+        </div>
+        <textarea id="script-area" spellcheck="false"></textarea>
+    </div>
+
+<script>
+/**
+ * ------------------------------------------------------------------
+ * CONSTANTS & CONFIG
+ * ------------------------------------------------------------------
+ */
+const DEFAULT_SCRIPT = [
+    {
+        "time": 0,
+        "circle": { "size": 50, "pulse": 1.5, "color": "#ffffff", "bpmMult": 1 },
+        "spectrum": { "radius": 120, "height": 100, "spinSpeed": 0.5, "color": "#ffffff" },
+        "edges": { "active": true, "speed": 4, "intensity": 0.5, "bpmMult": 1, "color": "#ff0055" },
+        "particles": { "active": true, "count": 2, "swaySpeed": 1, "color": "#00aaff" }
+    },
+    {
+        "time": 4.5,
+        "rayBurst": { "count": 8, "width": 50, "length": 400, "life": 100, "spin": 2, "color": "#ffff00" }
+    },
+    {
+        "time": 8.0,
+        "spectrum": { "spinSpeed": 5.0, "color": "#ff0000" },
+        "circle": { "bpmMult": 2 }
+    }
+];
+
+// Global State
+let audioCtx, analyser, source, buffer;
+let isPlaying = false;
+let startTime = 0;
+let pauseTime = 0;
+let duration = 0;
+let bpm = 128;
+let scriptEvents = [];
+let currentEventIndex = 0;
+
+// Canvas Setup
+const canvas = document.getElementById('vizCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// Audio Data
+let dataArray, bufferLength;
+
+/**
+ * ------------------------------------------------------------------
+ * ELEMENT CLASSES
+ * ------------------------------------------------------------------
+ */
+
+class CenterCircle {
+    constructor() {
+        this.baseSize = 50;
+        this.pulseIntensity = 1.2; // Multiplier
+        this.color = '#ffffff';
+        this.bpmMult = 1;
+    }
+
+    draw(ctx, centerX, centerY, audioLevel, beatPhase) {
+        // Pulse calc: Sin wave based on BPM phase
+        const pulse = 1 + (Math.sin(beatPhase * Math.PI * 2 * this.bpmMult) * 0.1 * this.pulseIntensity) + (audioLevel * 0.2);
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, this.baseSize * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+class AudioSpectrum {
+    constructor() {
+        this.radius = 120;
+        this.barHeight = 100;
+        this.spinSpeed = 1; // Rotation speed
+        this.rotation = 0;
+        this.color = '#ffffff';
+    }
+
+    draw(ctx, centerX, centerY, dataArray, bufferLength) {
+        // Cut off high frequencies (usually empty)
+        const usableLength = Math.floor(bufferLength * 0.65);
+        const angleStep = (Math.PI) / usableLength; // Half circle (PI), then we mirror
+        
+        this.rotation += this.spinSpeed * 0.01;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(this.rotation);
+
+        ctx.beginPath();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+
+        // Draw Right Side (0 to PI)
+        for (let i = 0; i < usableLength; i++) {
+            const value = dataArray[i] / 255;
+            const h = value * this.barHeight;
+            const angle = i * angleStep;
+            
+            const x = Math.cos(angle) * (this.radius + h);
+            const y = Math.sin(angle) * (this.radius + h);
+            
+            // Inner point
+            const xi = Math.cos(angle) * this.radius;
+            const yi = Math.sin(angle) * this.radius;
+
+            ctx.moveTo(xi, yi);
+            ctx.lineTo(x, y);
+        }
+
+        // Draw Left Side (Mirror)
+        for (let i = 0; i < usableLength; i++) {
+            const value = dataArray[i] / 255;
+            const h = value * this.barHeight;
+            const angle = i * angleStep;
+            
+            // Mirror x
+            const x = Math.cos(angle) * -(this.radius + h); // Negative X
+            const y = Math.sin(angle) * (this.radius + h);  // Same Y (rotates locally)
+            
+            const xi = Math.cos(angle) * -this.radius;
+            const yi = Math.sin(angle) * this.radius;
+
+            ctx.moveTo(xi, yi);
+            ctx.lineTo(x, y);
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+class EdgeLights {
+    constructor() {
+        this.active = false;
+        this.intensity = 0.5;
+        this.speed = 2;
+        this.bpmMult = 1;
+        this.color = '#ffffff';
+    }
+
+    draw(ctx, w, h, beatPhase) {
+        if (!this.active) return;
+        
+        // Use Sin for alternating left/right
+        // Phase 0->0.5 (Left), 0.5->1.0 (Right)
+        const cycle = (beatPhase * this.bpmMult) % 1;
+        
+        const leftAlpha = Math.max(0, Math.sin(cycle * Math.PI * 2) * this.intensity);
+        const rightAlpha = Math.max(0, Math.sin((cycle + 0.5) * Math.PI * 2) * this.intensity);
+
+        // Left Light
+        const gradL = ctx.createLinearGradient(0, 0, 100, 0);
+        gradL.addColorStop(0, this.color);
+        gradL.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradL;
+        ctx.globalAlpha = leftAlpha;
+        ctx.fillRect(0, 0, 100, h);
+
+        // Right Light
+        const gradR = ctx.createLinearGradient(w, 0, w - 100, 0);
+        gradR.addColorStop(0, this.color);
+        gradR.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradR;
+        ctx.globalAlpha = rightAlpha;
+        ctx.fillRect(w - 100, 0, 100, h);
+
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+class ParticleSystem {
+    constructor() {
+        this.particles = [];
+        this.active = false;
+        this.swaySpeed = 1;
+        this.spawnRate = 2; 
+        this.color = '#ffffff';
+    }
+
+    update(w, h, time) {
+        if (this.active) {
+            // Spawn logic
+            for(let i=0; i<this.spawnRate; i++) {
+                // Bottom Left Emitter
+                this.particles.push({
+                    x: 0, y: h, 
+                    vx: 2 + Math.random() * 2, 
+                    vy: -(3 + Math.random() * 5), 
+                    life: 100, maxLife: 100,
+                    side: 'left'
+                });
+                // Bottom Right Emitter
+                this.particles.push({
+                    x: w, y: h, 
+                    vx: -(2 + Math.random() * 2), 
+                    vy: -(3 + Math.random() * 5), 
+                    life: 100, maxLife: 100,
+                    side: 'right'
+                });
+            }
+        }
+
+        // Sway Offset
+        const sway = Math.sin(time * this.swaySpeed) * 0.5;
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            let p = this.particles[i];
+            p.x += p.vx + sway;
+            p.y += p.vy;
+            p.life--;
+            
+            if (p.life <= 0) this.particles.splice(i, 1);
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        this.particles.forEach(p => {
+            const alpha = p.life / p.maxLife;
+            ctx.globalAlpha = alpha;
+            ctx.fillRect(p.x, p.y, 4, 4);
+        });
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+class RayManager {
+    constructor() {
+        this.rays = []; // { angle, width, length, life, maxLife, spinSpeed, color, expanding }
+    }
+
+    spawn(config) {
+        // config: { count, width, length, life, spin, color }
+        const angleStep = (Math.PI * 2) / config.count;
+        for(let i=0; i<config.count; i++) {
+            this.rays.push({
+                angle: i * angleStep,
+                width: 1, // Start thin
+                targetWidth: config.width,
+                length: config.length,
+                life: config.life,
+                maxLife: config.life,
+                spin: config.spin,
+                color: config.color,
+                age: 0
+            });
+        }
+    }
+
+    update() {
+        for (let i = this.rays.length - 1; i >= 0; i--) {
+            let r = this.rays[i];
+            r.age++;
+            r.life--;
+            r.angle += r.spin * 0.01;
+            
+            // Ease out width
+            if (r.width < r.targetWidth) {
+                r.width += (r.targetWidth - r.width) * 0.1;
+            }
+
+            if (r.life <= 0) this.rays.splice(i, 1);
+        }
+    }
+
+    draw(ctx, cx, cy) {
+        this.rays.forEach(r => {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(r.angle);
+            ctx.fillStyle = r.color;
+            
+            // Fade out at end of life
+            const alpha = Math.min(1, r.life / 20); 
+            ctx.globalAlpha = alpha;
+
+            // Draw ray behind circle
+            ctx.fillRect(0, -r.width/2, r.length, r.width);
+            
+            ctx.restore();
+        });
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+/**
+ * ------------------------------------------------------------------
+ * MAIN ENGINE
+ * ------------------------------------------------------------------
+ */
+
+// Instances
+const elCircle = new CenterCircle();
+const elSpectrum = new AudioSpectrum();
+const elEdges = new EdgeLights();
+const elParticles = new ParticleSystem();
+const elRays = new RayManager();
+
+// Setup UI
+document.getElementById('script-area').value = JSON.stringify(DEFAULT_SCRIPT, null, 4);
+scriptEvents = DEFAULT_SCRIPT;
+
+function resize() {
+    width = canvas.width = canvas.parentElement.clientWidth;
+    height = canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Audio Handling
+document.getElementById('audioFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            initAudio(ev.target.result);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+});
+
+function initAudio(arrayBuffer) {
+    if(audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    audioCtx.decodeAudioData(arrayBuffer, function(bufferData) {
+        buffer = bufferData;
+        duration = buffer.duration;
+        document.getElementById('seek-bar').max = duration;
+        playAudio(0);
+    });
+}
+
+function playAudio(offset) {
+    if (source) source.stop();
+    source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    
+    source.start(0, offset);
+    startTime = audioCtx.currentTime - offset;
+    isPlaying = true;
+    document.getElementById('playBtn').innerText = "Pause";
+    
+    // Reset script pointer
+    currentEventIndex = 0;
+    // Find where we are in script if seeking
+    for(let i=0; i<scriptEvents.length; i++) {
+        if(offset >= scriptEvents[i].time) {
+            applyEvent(scriptEvents[i]);
+            currentEventIndex = i + 1;
+        }
+    }
+}
+
+function togglePlay() {
+    if (!audioCtx) return;
+    if (isPlaying) {
+        source.stop();
+        pauseTime = audioCtx.currentTime - startTime;
+        isPlaying = false;
+        document.getElementById('playBtn').innerText = "Play";
+    } else {
+        playAudio(pauseTime);
+    }
+}
+
+document.getElementById('playBtn').addEventListener('click', togglePlay);
+
+document.getElementById('seek-bar').addEventListener('input', (e) => {
+    if(!audioCtx || !buffer) return;
+    const time = parseFloat(e.target.value);
+    pauseTime = time;
+    if(isPlaying) {
+        playAudio(time);
+    } else {
+        // Update visual time purely for display if paused (optional, harder without engine running)
+    }
+});
+
+// Scripting Logic
+document.getElementById('applyScriptBtn').addEventListener('click', () => {
+    try {
+        const txt = document.getElementById('script-area').value;
+        scriptEvents = JSON.parse(txt);
+        // Re-sort by time just in case
+        scriptEvents.sort((a,b) => a.time - b.time);
+    } catch(e) {
+        alert("Invalid JSON");
+    }
+});
+
+document.getElementById('downloadScriptBtn').addEventListener('click', () => {
+     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(document.getElementById('script-area').value);
+    const node = document.createElement('a');
+    node.setAttribute("href", dataStr);
+    node.setAttribute("download", "visualizer_script.json");
+    document.body.appendChild(node);
+    node.click();
+    node.remove();
+});
+
+document.getElementById('bpmInp').addEventListener('change', (e) => {
+    bpm = parseFloat(e.target.value);
+});
+
+function applyEvent(ev) {
+    // Circle
+    if (ev.circle) {
+        if(ev.circle.size !== undefined) elCircle.baseSize = ev.circle.size;
+        if(ev.circle.pulse !== undefined) elCircle.pulseIntensity = ev.circle.pulse;
+        if(ev.circle.color !== undefined) elCircle.color = ev.circle.color;
+        if(ev.circle.bpmMult !== undefined) elCircle.bpmMult = ev.circle.bpmMult;
+    }
+    // Spectrum
+    if (ev.spectrum) {
+        if(ev.spectrum.radius !== undefined) elSpectrum.radius = ev.spectrum.radius;
+        if(ev.spectrum.height !== undefined) elSpectrum.barHeight = ev.spectrum.height;
+        if(ev.spectrum.spinSpeed !== undefined) elSpectrum.spinSpeed = ev.spectrum.spinSpeed;
+        if(ev.spectrum.color !== undefined) elSpectrum.color = ev.spectrum.color;
+    }
+    // Edges
+    if (ev.edges) {
+        if(ev.edges.active !== undefined) elEdges.active = ev.edges.active;
+        if(ev.edges.speed !== undefined) elEdges.speed = ev.edges.speed;
+        if(ev.edges.intensity !== undefined) elEdges.intensity = ev.edges.intensity;
+        if(ev.edges.bpmMult !== undefined) elEdges.bpmMult = ev.edges.bpmMult;
+        if(ev.edges.color !== undefined) elEdges.color = ev.edges.color;
+    }
+    // Particles
+    if (ev.particles) {
+        if(ev.particles.active !== undefined) elParticles.active = ev.particles.active;
+        if(ev.particles.count !== undefined) elParticles.spawnRate = ev.particles.count;
+        if(ev.particles.swaySpeed !== undefined) elParticles.swaySpeed = ev.particles.swaySpeed;
+        if(ev.particles.color !== undefined) elParticles.color = ev.particles.color;
+    }
+    // Ray Burst (Instant event)
+    if (ev.rayBurst) {
+        elRays.spawn(ev.rayBurst);
+    }
+}
+
+// Render Loop
+function loop() {
+    requestAnimationFrame(loop);
+
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, width, height);
+
+    if (!audioCtx) return;
+
+    let currentTime = 0;
+    if (isPlaying) {
+        currentTime = audioCtx.currentTime - startTime;
+        analyser.getByteFrequencyData(dataArray);
+        document.getElementById('seek-bar').value = currentTime;
+        
+        let min = Math.floor(currentTime / 60);
+        let sec = Math.floor(currentTime % 60);
+        document.getElementById('time-display').innerText = `${min}:${sec < 10 ? '0'+sec : sec}`;
+    }
+
+    // Process Script
+    if (isPlaying && currentEventIndex < scriptEvents.length) {
+        const nextEv = scriptEvents[currentEventIndex];
+        if (currentTime >= nextEv.time) {
+            applyEvent(nextEv);
+            currentEventIndex++;
+        }
+    }
+
+    // BPM Calculation
+    const beatDuration = 60 / bpm;
+    // Phase runs from 0 to 1 every beat
+    const beatPhase = (currentTime % beatDuration) / beatDuration;
+
+    // Calc Average Volume for general reactivity
+    let sum = 0;
+    if(dataArray) {
+        for(let i=0; i<bufferLength; i++) sum += dataArray[i];
+    }
+    const avgAudio = sum / (bufferLength * 255); // 0.0 to 1.0
+
+    // Draw Elements (Order matters for layers)
+    
+    // 1. Rays (Behind everything)
+    elRays.update();
+    elRays.draw(ctx, width/2, height/2);
+
+    // 2. Particles (Background layer)
+    elParticles.update(width, height, currentTime);
+    elParticles.draw(ctx);
+
+    // 3. Spectrum
+    if(dataArray) {
+        elSpectrum.draw(ctx, width/2, height/2, dataArray, bufferLength);
+    }
+
+    // 4. Center Circle
+    elCircle.draw(ctx, width/2, height/2, avgAudio, beatPhase);
+
+    // 5. Edge Lights (Overlay)
+    elEdges.draw(ctx, width, height, beatPhase);
+}
+
+// Start Loop
+loop();
+
+</script>
+</body>
+</html>

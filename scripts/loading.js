@@ -29,9 +29,10 @@ async function loadMin() {
             i = 0
         }
         randomTime = Math.random() * loadMinValue
-        updateLoadingStatus(`[${waitTime}/${maxWaitTime}] Connecting to chat${dots}`);
+        updateLoadingStatus(`[${waitTime}/${maxWaitTime}] Waiting for DOM${dots}`);
         await sleep(1000)
         waitTime++
+        console.log(document.readyState)
         if (document.readyState === 'complete') {
             loadingFinished = true;
             const loadingHeader = document.getElementById('loading-header');
@@ -49,6 +50,11 @@ async function loadMin() {
         }
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Your JavaScript code here will execute after the DOM is fully loaded.
+        // You can safely access and manipulate DOM elements here.
+        console.log('DOM fully loaded and parsed');
+    });
     
 }
 
@@ -69,5 +75,9 @@ async function closeLoading() {
     playDialogue("welcome");
     ambient.volume = 0.5
     ambient.play()
-    console.log("Loading page closed");
+    dockControlOverride = true
+    dockControl(true)
+    await sleep(3000)
+    dockControl(false)
+    dockControlOverride = false
 }
