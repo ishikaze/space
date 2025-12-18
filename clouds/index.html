@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Serene Cloud Gazing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #0b1320; overflow: hidden; }
+    canvas { display: block; image-rendering: pixelated; }
+  </style>
+  
+  <!-- 1. The Import Map fixes the "Uncaught TypeError" -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.161/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+<script type="module">
+// 2. Update imports to use the keys defined in the Import Map
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+// --- Renderer (low-res for pixelation) ---
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+const LOW_RES_SCALE = 0.6; // stronger pixelation
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(DPR * LOW_RES_SCALE);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// --- Scene & Camera (POV lying under a tree) ---
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x8fb3ff, 10, 80);
+
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 0.2, 0);
+camera.lookAt(0, 8, -6); // looking up
+
+// --- Lights (soft, dappled) ---
+const hemi = new THREE.HemisphereLight(0xcfe9ff, 0x2a3b2f, 0.9);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2cc, 0.6);
+sun.position.set(-5, 10, -5);
+scene.add(sun);
+
+// --- Sky with subtle moving clouds (shader plane) ---
+const skyGeo = new THREE.PlaneGeometry(120, 120, 1, 1);
+const skyMat = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: { time: { value: 0 } },
+  vertexShader: `
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
+  `,
+  fragmentShader: `
+    varying vec2 vUv; uniform float time;
+    float noise(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+    float fbm(vec2 p){ float v=0.0; float a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.0; a*=0.5; } return v; }
+    void main(){
+      vec2 uv = vUv * 2.5;
+      uv.x += time * 0.01;
+      float c = smoothstep(0.45, 0.75, fbm(uv));
+      vec3 sky = mix(vec3(0.55,0.7,0.95), vec3(0.9), c*0.6);
+      gl_FragColor = vec4(sky, 1.0);
+    }
+  `
+});
+const sky = new THREE.Mesh(skyGeo, skyMat);
+sky.rotation.x = -Math.PI/2.2;
+sky.position.y = 10;
+sky.position.z = -6;
+scene.add(sky);
+
+// --- Tree canopy (billboards of leaves overhead) ---
+// Using a reliable generic leaf texture
+const leafTex = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/snowflake2.png'); 
+// (Swapped texture for generic snowflake masked as "leaf" or use your original URL if accessible)
+// Let's use a generated canvas texture for a leaf to ensure it works without external assets
+const canvas = document.createElement('canvas');
+canvas.width = 64; canvas.height = 64;
+const ctx = canvas.getContext('2d');
+ctx.fillStyle = '#fff';
+ctx.beginPath();
+ctx.ellipse(32, 32, 10, 25, Math.PI/4, 0, Math.PI*2);
+ctx.fill();
+const genLeafTex = new THREE.CanvasTexture(canvas);
+
+
+const canopy = new THREE.Group();
+for(let i=0;i<200;i++){
+  const m = new THREE.SpriteMaterial({ map: genLeafTex, color: 0x7fbf6a, transparent: true, opacity: 0.85 });
+  const s = new THREE.Sprite(m);
+  const r = 5 + Math.random()*6;
+  const a = Math.random()*Math.PI*2;
+  s.position.set(Math.cos(a)*r, 6.5 + Math.random()*2, Math.sin(a)*r - 6);
+  const sc = 0.5 + Math.random()*0.5;
+  s.scale.set(sc, sc, 1);
+  s.userData = { sway: Math.random()*Math.PI*2 };
+  canopy.add(s);
+}
+scene.add(canopy);
+
+// --- Falling leaves ---
+const falling = [];
+function spawnLeaf(){
+  const m = new THREE.SpriteMaterial({ map: genLeafTex, color: 0x9ad18b, transparent: true, opacity: 0.9 });
+  const s = new THREE.Sprite(m);
+  s.position.set((Math.random()-0.5)*6, 8 + Math.random()*2, -6 + (Math.random()-0.5)*6);
+  const sc = 0.3 + Math.random()*0.4;
+  s.scale.set(sc, sc, 1);
+  s.userData = { vy: -0.3 - Math.random()*0.3, phase: Math.random()*Math.PI*2 };
+  scene.add(s);
+  falling.push(s);
+}
+
+// --- Butterflies (occasional sprites) ---
+// Simple generated butterfly texture
+const bCanvas = document.createElement('canvas');
+bCanvas.width = 64; bCanvas.height = 64;
+const bCtx = bCanvas.getContext('2d');
+bCtx.fillStyle = '#fff';
+bCtx.beginPath();
+bCtx.arc(20, 32, 15, 0, Math.PI*2);
+bCtx.arc(44, 32, 15, 0, Math.PI*2);
+bCtx.fill();
+const genButterTex = new THREE.CanvasTexture(bCanvas);
+
+const butterflies = [];
+function spawnButterfly(){
+  const m = new THREE.SpriteMaterial({ map: genButterTex, color: 0xffd6ff, transparent: true, opacity: 0.9 });
+  const s = new THREE.Sprite(m);
+  s.position.set(-10, 3+Math.random()*4, -6 + (Math.random()-0.5)*4);
+  s.scale.set(0.6,0.6,1);
+  s.userData = { vx: 0.6 + Math.random()*0.4, t: 0 };
+  scene.add(s); butterflies.push(s);
+}
+
+// --- Postprocessing (Bloom) ---
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.6, 0.8, 0.85);
+composer.addPass(bloom);
+
+let lastLeaf = 0, lastButter = 0;
+const clock = new THREE.Clock();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  skyMat.uniforms.time.value = t;
+
+  // canopy sway
+  canopy.children.forEach(s => {
+    s.userData.sway += 0.01;
+    s.position.x += Math.sin(s.userData.sway)*0.002;
+    s.position.z += Math.cos(s.userData.sway)*0.002;
+  });
+
+  // spawn falling leaves occasionally
+  if(t - lastLeaf > 2.5 + Math.random()*3){ lastLeaf = t; spawnLeaf(); }
+  falling.forEach((s,i)=>{
+    s.userData.phase += 0.05;
+    s.position.y += s.userData.vy * 0.03;
+    s.position.x += Math.sin(s.userData.phase)*0.01;
+    if(s.position.y < -1){ scene.remove(s); falling.splice(i,1); }
+  });
+
+  // butterflies occasionally
+  if(t - lastButter > 6 + Math.random()*8){ lastButter = t; spawnButterfly(); }
+  butterflies.forEach((s,i)=>{
+    s.userData.t += 0.04;
+    s.position.x += s.userData.vx * 0.03;
+    s.position.y += Math.sin(s.userData.t)*0.02;
+    if(s.position.x > 10){ scene.remove(s); butterflies.splice(i,1); }
+  });
+
+  composer.render();
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

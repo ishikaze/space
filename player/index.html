@@ -3,852 +3,932 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>player</title>
+    <title>player client v7(16)</title>
     <style>
         :root {
             --p: #ff96d3;
             --s: #78b7ff;
-            --bg: #111;
+            --gold: #ffd700;
+            --auto: #00ffcc;
+            --playfield-op: 1.0;
+            --bg-dim: 0.5;
+            --bloom-blur: 0px;
+            --bloom-bright: 1.0;
         }
 
         body {
             margin: 0;
             overflow: hidden;
-            background: var(--bg);
+            background: #000;
             font-family: 'Segoe UI', sans-serif;
             color: white;
             user-select: none;
         }
 
-        #bg-art {
+        #video-placeholder {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.3;
-            filter: blur(8px) brightness(0.6);
             z-index: 0;
-            transition: opacity 1s;
+            pointer-events: none;
+            border: none;
+            transform-origin: center center;
+            transform: scale(1.1);
+            transition: transform 0.05s linear;
         }
 
-        canvas {
-            display: block;
+        body.game-paused #video-placeholder {
+            pointer-events: auto;
+        }
+
+        body.game-paused #gameCanvas,
+        body.game-paused #bloom-layer,
+        body.game-paused #bg-dim-layer {
+            pointer-events: none;
+        }
+
+        #bg-dim-layer {
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            opacity: var(--bg-dim);
             z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.1s linear;
         }
 
-        #game-ui {
+        #gameCanvas {
             position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            display: block;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            opacity: var(--playfield-op);
+            transition: opacity 0.1s;
+        }
+
+        #bloom-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            z-index: 6;
+            pointer-events: none;
+            backdrop-filter: blur(var(--bloom-blur)) brightness(var(--bloom-bright));
+            transition: backdrop-filter 0.1s linear;
+        }
+
+        #flash-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: red;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 25;
+            transition: opacity 0.1s;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            z-index: 5;
-            pointer-events: none;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        #score {
-            font-size: 42px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        #combo {
-            font-size: 60px;
-            font-weight: 900;
-            color: var(--s);
-            margin-top: 5px;
-            transition: transform 0.1s;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            z-index: 10;
-            backdrop-filter: blur(5px);
-        }
-
-        #menu-overlay {
-            display: flex; 
+            align-items: center;
         }
 
         .menu-box {
-            background: #222;
-            border: 1px solid #444;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid var(--s);
             padding: 40px;
-            border-radius: 12px;
+            border-radius: 10px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(120, 183, 255, 0.3);
+            display: none;
             max-width: 500px;
-            width: 90%;
+            width: 80%;
         }
 
-        h1 { margin: 0 0 10px 0; color: var(--p); }
-        h2 { margin: 0 0 30px 0; color: #888; font-weight: normal; font-size: 18px; }
+        .menu-box h1 {
+            margin-top: 0;
+            color: var(--p);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 32px;
+            text-shadow: 0 0 10px var(--p);
+        }
 
         .btn {
-            background: var(--s);
-            color: #000;
-            border: none;
-            padding: 15px 40px;
-            font-size: 20px;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 10px 30px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 4px;
             transition: 0.2s;
-            text-transform: uppercase;
             margin: 10px;
+            text-transform: uppercase;
         }
 
         .btn:hover {
             background: white;
+            color: black;
+            box-shadow: 0 0 15px white;
+        }
+
+        .btn-primary {
+            border-color: var(--s);
+            color: var(--s);
+        }
+
+        .btn-primary:hover {
+            background: var(--s);
+            color: black;
             box-shadow: 0 0 15px var(--s);
-            transform: scale(1.05);
         }
 
-        .btn-quit {
-            background: #ff5555;
-            color: white;
-        }
-
-        #manual-load {
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-            border-top: 1px solid #444;
-            padding-top: 20px;
-        }
-        
-        .file-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
-            font-size: 14px;
-            color: #aaa;
-        }
-        
         input[type="file"] {
-            background: #111;
+            margin: 20px 0;
             padding: 10px;
+            background: #222;
+            border: 1px solid #444;
             width: 100%;
             box-sizing: border-box;
-            border: 1px solid #333;
-            border-radius: 4px;
+        }
+
+        #countdown {
+            position: absolute;
+            font-size: 100px;
+            font-weight: 900;
             color: white;
-        }
-
-        #loading-text {
-            color: #aaa;
-            margin-top: 20px;
-            font-style: italic;
-        }
-
-        #error-msg {
-            color: #ff5555;
-            margin-top: 15px;
+            text-shadow: 0 0 30px var(--p);
             display: none;
+        }
+
+        .loader-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--s);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="bg-art"></div>
+    <div id="video-placeholder"></div>
 
-    <div id="game-ui">
-        <div id="score">0</div>
-        <div id="combo">0</div>
-    </div>
+    <div id="bg-dim-layer"></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="bloom-layer"></div>
+    <div id="flash-overlay"></div>
 
-    <div id="pause-overlay" class="overlay">
-        <div class="menu-box">
-            <h1>PAUSED</h1>
-            <h2 style="margin-bottom: 20px">Game Paused</h2>
-            <button class="btn" onclick="togglePause()">Resume</button>
-            <button class="btn btn-quit" onclick="location.reload()">Quit</button>
-            <div style="margin-top: 15px; font-size: 14px; color: #888;">Resuming rewinds 3 seconds</div>
-        </div>
-    </div>
+    <div id="ui-layer">
 
-    <div id="menu-overlay" class="overlay">
-        <div class="menu-box">
-            <h1 id="track-title">Rhythm Client</h1>
-            <h2 id="track-artist">No track loaded</h2>
+        <div id="countdown">3</div>
+        <div id="menu-main" class="menu-box">
+            <h1>player client</h1>
+            <div id="loading-status">
+                <div class="loader-spinner"></div>
+                <p>Initializing YouTube API...</p>
+            </div>
 
-            <button id="start-btn" class="btn" onclick="startGame()" style="display:none">PLAY</button>
+            <div id="load-options" style="display:none;">
+                <p>No chart found in local storage.</p>
+                <input type="file" id="fileInput" accept=".json">
+                <p style="font-size: 12px; color: #666;">Or save a chart to localStorage key "selectedChart"</p>
+            </div>
 
-            <div id="loading-text">Checking storage...</div>
-            <div id="error-msg"></div>
-
-            <div id="manual-load">
-                <div style="color:var(--p); margin-bottom:10px;">Select files manually:</div>
-                <div class="file-group">
-                    <label>Audio (MP3/WAV)</label>
-                    <input type="file" id="audioInput" accept="audio/*">
-                </div>
-                <div class="file-group">
-                    <label>Chart (JSON)</label>
-                    <input type="file" id="mapInput" accept=".json">
-                </div>
-                <button class="btn" style="margin-top:10px; font-size:16px; padding:10px;" onclick="loadManualFiles()">Load Selected</button>
+            <div id="ready-options" style="display:none;">
+                <h2 id="song-info" style="color:white; margin:10px 0;">Unknown Song</h2>
+                <button class="btn btn-primary" onclick="startGame()">Start Game</button>
             </div>
         </div>
+
+        <div id="menu-pause" class="menu-box">
+            <h1>Paused</h1>
+            <div id="pause-stats" style="margin-bottom:20px; font-size:20px;"></div>
+            <button class="btn btn-primary" onclick="resumeGame()">Resume</button>
+            <button class="btn" onclick="location.reload()">Quit</button>
+        </div>
+
+        <div id="menu-results" class="menu-box">
+            <h1>Finished!</h1>
+            <div id="final-score" style="font-size:40px; color:var(--s); margin:20px 0;">0</div>
+            <p id="final-stats"></p>
+            <button class="btn btn-primary" onclick="location.reload()">Back to Menu</button>
+        </div>
+
     </div>
 
-    <canvas id="gameCanvas"></canvas>
-
     <script>
-        /** 
-         * CONFIGURATION 
-         */
         const CONFIG = {
-            gridDim: 3,
-            gridSpacing: 100,
-            fov: 350,
-            approachDistance: 6000,
-            hitZ: 50,
-            colors: ['#78b7ff', '#ff96d3'],
-            startBuffer: 2.0 
+            gridDim: 3, gridSpacing: 100, fov: 350, approachDistance: 8000, hitZ: 50,
+            hitZ: 0,
+            cameraZ: 250,
+            colors: ['#78b7ff', '#ff96d3', '#ff4444'], 
+            startBuffer: 3.0 
         };
 
         const STATE = {
-            bpm: 128,
-            scrollSpeed: 3500,
-            offset: 0,
-            isPlaying: false,
-            isPaused: false, 
-            isFadingOut: false, 
-            currentTime: 0,
-            duration: 0,
-            score: 0,
-            displayedScore: 0,
-            combo: 0,
-            maxCombo: 0,
-            perfects: 0,
-            misses: 0   
+            status: 'LOADING', 
+            offset: 0, baseSpeed: 2500,
+            currentTime: 0, duration: 0,
+            score: 0, displayedScore: 0, 
+            combo: 0, maxCombo: 0, hits: 0, misses: 0,
+
+            lastNoteBeat: 0,
+            isFading: false,
+            fadeStartTime: 0,
+
+            fever: 0,
+            feverMax: 100,
+            feverState: 0,
+        };
+
+        const UI_ANIM = {
+            comboScale: 1.0,
+            spaceAlpha: 0.0
         };
 
         let mapData = [];
-        let lastNoteBeat = 0; 
-        let particles = [];
-        
-        let bgDiamonds = [];
-        let lastBeatFloored = 0;
-        
-        let comboPopup = {
-            active: false,
-            value: 0,
-            life: 0.5,      
-            duration: 1 
-        };
+        let gameEvents = [];
+        let bpmEvents = [{ beat: 0, bpm: 128, time: 0 }]; 
+        let ytPlayer; let ytReady = false;
 
-        const audio = new Audio();
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let fadeInterval = null;
-        
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let lastTime = performance.now();
+        const bgVideo = document.getElementById('video-placeholder');
+        let mouse = { x: 0, y: 0, realX: 0, realY: 0 };
+        let camera = { x: 0, y: 0, recoil: 0, shake: 0 };
+        let targetCamera = { x: 0, y: 0 };
+        let viewShake = { x: 0, y: 0 };
+        let particles = [];
 
-        const mouse = { x: 0, y: 0, realX: 0, realY: 0 };
-        const camera = { x: 0, y: 0 };
-        const targetCamera = { x: 0, y: 0 };
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        /**
-         * INITIALIZATION
-         */
-        function init() {
-            resize();
-            window.addEventListener('resize', resize);
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('keydown', e => {
-                if(e.code === 'Escape' && STATE.isPlaying) {
-                   togglePause();
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('video-placeholder', {
+                height: '100%', width: '100%', videoId: '',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'disablekb': 1 },
+                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+            });
+        }
+
+        function onPlayerReady() {
+            ytReady = true;
+            checkLocalStorageLoad();
+        }
+
+        function onPlayerStateChange(e) {
+            if (e.data === YT.PlayerState.ENDED && STATE.status === 'PLAYING' && !STATE.isFading) {
+                finishGame();
+            }
+        }
+
+        function updateBPMCache() {
+            bpmEvents.sort((a, b) => a.beat - b.beat);
+            if (bpmEvents.length === 0 || bpmEvents[0].beat !== 0) {
+                bpmEvents.unshift({ beat: 0, bpm: 128, time: 0 });
+            }
+            bpmEvents[0].time = 0; 
+
+            for (let i = 0; i < bpmEvents.length - 1; i++) {
+                const curr = bpmEvents[i];
+                const next = bpmEvents[i+1];
+                const beatsDiff = next.beat - curr.beat;
+                const secondsDiff = beatsDiff * (60 / curr.bpm);
+                next.time = curr.time + secondsDiff;
+            }
+        }
+
+        function timeToBeat(time) {
+            if (time <= 0) return 0;
+            let evt = bpmEvents[0];
+            for (let i = 0; i < bpmEvents.length; i++) {
+                if (time >= bpmEvents[i].time) evt = bpmEvents[i];
+                else break;
+            }
+            return evt.beat + (time - evt.time) * (evt.bpm / 60);
+        }
+
+        function checkLocalStorageLoad() {
+            const statusDiv = document.getElementById('loading-status');
+            const storedChart = localStorage.getItem('selectedChart');
+
+            if (storedChart) {
+                try {
+                    const data = JSON.parse(storedChart);
+                    loadMapData(data);
+                    statusDiv.style.display = 'none';
+                    document.getElementById('ready-options').style.display = 'block';
+                    document.getElementById('menu-main').style.display = 'block';
+                    document.getElementById('song-info').innerText = "Map Loaded via LocalStorage";
+                } catch (e) {
+                    console.error("LS Load Failed", e);
+                    promptManualLoad();
                 }
+            } else {
+                promptManualLoad();
+            }
+        }
+
+        function promptManualLoad() {
+            document.getElementById('loading-status').style.display = 'none';
+            document.getElementById('load-options').style.display = 'block';
+            document.getElementById('menu-main').style.display = 'block';
+
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = ev => {
+                    try {
+                        const d = JSON.parse(ev.target.result);
+                        loadMapData(d);
+                        document.getElementById('load-options').style.display = 'none';
+                        document.getElementById('ready-options').style.display = 'block';
+                        document.getElementById('song-info').innerText = f.name.replace('.json', '');
+                    } catch (err) { alert("Invalid JSON file"); }
+                };
+                r.readAsText(f);
+            });
+        }
+
+        function loadMapData(data) {
+            if (data.bpm && Array.isArray(data.bpm)) {
+                bpmEvents = data.bpm;
+            } else {
+                bpmEvents = [{ beat: 0, bpm: data.bpm || 128, time: 0 }];
+            }
+            updateBPMCache();
+
+            STATE.offset = (data.offset || 0) + 25; 
+            mapData = data.notes.map(n => ({ ...n, hit: false, missed: false }));
+
+            STATE.lastNoteBeat = 0;
+            mapData.forEach(n => {
+                if (n.beat > STATE.lastNoteBeat) STATE.lastNoteBeat = n.beat;
             });
 
-            checkLocalStorage();
-            requestAnimationFrame(loop);
-        }
-
-        /**
-         * PAUSE LOGIC
-         */
-        function togglePause() {
-            const pauseOverlay = document.getElementById('pause-overlay');
-            
-            if (STATE.isPaused) {
-                STATE.isPaused = false;
-                pauseOverlay.style.display = 'none';
-                canvas.style.cursor = 'none';
-
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
-                if (audio.currentTime > 0) {
-                    const rewindTime = 3;
-                    audio.currentTime = Math.max(0, audio.currentTime - rewindTime);
-                }
-                
-                audio.play();
-
+            if (data.speedEvents && !data.events) {
+                gameEvents = data.speedEvents.map(s => ({ beat: s.beat, type: 'speed', value: (s.mult || s.val / 800) }));
+                gameEvents.push(
+                    { beat: 0, type: 'bg-dim', value: 0.5 },
+                    { beat: 0, type: 'playfield-op', value: 1.0 },
+                    { beat: 0, type: 'bloom-blur', value: 0 },
+                    { beat: 0, type: 'bloom-bright', value: 1.0 }
+                );
+            } else if (data.events) {
+                gameEvents = data.events;
             } else {
-                STATE.isPaused = true;
-                pauseOverlay.style.display = 'flex'; 
-                canvas.style.cursor = 'default';
-                audio.pause();
+                gameEvents = [{ beat: 0, type: 'speed', value: 1 }];
+            }
+
+            if (data.youtubeId && ytReady) {
+                ytPlayer.loadVideoById(data.youtubeId);
+                ytPlayer.pauseVideo();
             }
         }
 
-        /**
-         * LOADING LOGIC
-         */
-        async function checkLocalStorage() {
-            const raw = localStorage.getItem('selectedTrack');
-            
-            if (!raw) {
-                showManualLoad("No track selected in storage.");
-                return;
-            }
-
-            try {
-                const track = JSON.parse(raw);
-                document.getElementById('track-title').innerText = track.name || "Unknown";
-                document.getElementById('track-artist').innerText = track.artist || "Unknown";
-                
-                if(track.artwork) {
-                    document.getElementById('bg-art').style.backgroundImage = `url('${track.artwork}')`;
-                }
-
-                const chartRes = await fetch(track.chart);
-                if(!chartRes.ok) throw new Error("Failed to load chart JSON");
-                const chartJson = await chartRes.json();
-                
-                parseMapData(chartJson);
-                audio.src = track.url;
-                showReadyState();
-
-            } catch (err) {
-                console.error(err);
-                showManualLoad("Error loading files: " + err.message);
-            }
-        }
-
-        function parseMapData(json) {
-            STATE.bpm = json.bpm || 128;
-            STATE.offset = json.offset || 0;
-            mapData = (json.notes || []).sort((a,b) => a.beat - b.beat);
-            mapData.forEach(n => { n.hit = false; n.missed = false; });
-
-            if(mapData.length > 0) {
-                lastNoteBeat = mapData[mapData.length - 1].beat;
-            }
-        }
-
-        function showManualLoad(msg) {
-            document.getElementById('loading-text').style.display = 'none';
-            document.getElementById('manual-load').style.display = 'flex';
-            const errEl = document.getElementById('error-msg');
-            errEl.style.display = 'block';
-            errEl.innerText = msg;
-            
-            document.getElementById('track-title').innerText = "Load Custom";
-            document.getElementById('track-artist').innerText = "Manual Mode";
-        }
-
-        function loadManualFiles() {
-            const audFile = document.getElementById('audioInput').files[0];
-            const mapFile = document.getElementById('mapInput').files[0];
-
-            if(!audFile || !mapFile) {
-                alert("Please select both Audio and JSON files.");
-                return;
-            }
-
-            audio.src = URL.createObjectURL(audFile);
-            const r = new FileReader();
-            r.onload = ev => {
-                try {
-                    const d = JSON.parse(ev.target.result);
-                    parseMapData(d);
-                    document.getElementById('track-title').innerText = "Custom Track";
-                    document.getElementById('track-artist').innerText = "User Loaded";
-                    document.getElementById('manual-load').style.display = 'none';
-                    document.getElementById('error-msg').style.display = 'none';
-                    showReadyState();
-                } catch (e) {
-                    alert("Invalid JSON");
-                }
-            };
-            r.readAsText(mapFile);
-        }
-
-        function showReadyState() {
-            document.getElementById('loading-text').style.display = 'none';
-            document.getElementById('start-btn').style.display = 'inline-block';
-        }
-
-        /**
-         * GAME LOGIC
-         */
         function startGame() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            document.getElementById('menu-overlay').style.display = 'none';
-            canvas.style.cursor = 'none';
-            audio.volume = 1.0; 
+
+            STATE.status = 'PLAYING';
+            STATE.score = 0; STATE.displayedScore = 0;
+            STATE.combo = 0; STATE.maxCombo = 0; STATE.hits = 0; STATE.misses = 0;
+            STATE.fever = 0; STATE.feverState = 0;
+            STATE.isFading = false;
+
+            document.querySelectorAll('.menu-box').forEach(el => el.style.display = 'none');
+            mapData.forEach(n => { n.hit = false; n.missed = false; });
+
+            resize();
+            canvas.requestPointerLock();
+            mouse.realX = canvas.width / 2; mouse.realY = canvas.height / 2;
 
             STATE.currentTime = -CONFIG.startBuffer;
-            STATE.score = 0;
-            STATE.displayedScore = 0;
-            STATE.combo = 0;
-            STATE.maxCombo = 0;
-            STATE.perfects = 0;
-            STATE.misses = 0;
-            STATE.isFadingOut = false;
-            
-            updateComboUI();
-            
-            bgDiamonds = [];
-            lastBeatFloored = 0;
-            comboPopup.active = false;
-            
-            STATE.isPlaying = true;
+            if (ytReady) {
+                ytPlayer.seekTo(0);
+                ytPlayer.pauseVideo();
+                ytPlayer.setVolume(100);
+            }
         }
+
+        function resumeGame() {
+            if (STATE.status !== 'PAUSED') return;
+            document.body.classList.remove('game-paused');
+            canvas.requestPointerLock();
+            STATE.status = 'PLAYING';
+            document.getElementById('menu-pause').style.display = 'none';
+
+            if (STATE.currentTime >= 0 && ytReady) {
+                ytPlayer.seekTo(STATE.currentTime);
+                ytPlayer.playVideo();
+            }
+        }
+
+        function pauseGame() {
+            if (STATE.status !== 'PLAYING') return;
+            STATE.status = 'PAUSED';
+            document.exitPointerLock();
+            if (ytReady) ytPlayer.pauseVideo();
+
+            document.body.classList.add('game-paused');
+            document.getElementById('menu-pause').style.display = 'block';
+            document.getElementById('pause-stats').innerHTML = `
+                Current Score: ${Math.floor(STATE.displayedScore).toLocaleString()}<br>
+                <span style="font-size:14px; color:#aaa; margin-top:5px; display:block;">
+                    (Click video background to Skip Ads)
+                </span>`;
+        }
+
+        function finishGame() {
+            STATE.status = 'FINISHED';
+            document.exitPointerLock();
+            document.getElementById('menu-results').style.display = 'block';
+            document.getElementById('final-score').innerText = Math.floor(STATE.score).toLocaleString();
+            document.getElementById('final-stats').innerHTML = `
+                Max Combo: ${STATE.maxCombo}<br>
+                Hits: ${STATE.hits}<br>
+                Misses: ${STATE.misses}
+            `;
+        }
+
+
+        window.addEventListener('resize', resize);
+
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Escape') {
+                if (STATE.status === 'PLAYING') pauseGame();
+                else if (STATE.status === 'PAUSED') resumeGame();
+            }
+            if (e.code === 'Space' && STATE.status === 'PLAYING') {
+                if (STATE.feverState === 1) {
+                    activateAutoMode();
+                } else if (STATE.feverState === 2) {
+                    STATE.feverState = 1;
+                }
+            }
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === null && STATE.status === 'PLAYING') {
+                pauseGame();
+            }
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (STATE.feverState === 2) return;
+
+            if (document.pointerLockElement === canvas) {
+                const fieldSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
+                const p1 = project(-fieldSize, -fieldSize, CONFIG.hitZ, camera.x, camera.y);
+                const p2 = project(fieldSize, fieldSize, CONFIG.hitZ, camera.x, camera.y);
+                const minX = Math.min(p1.x, p2.x); const maxX = Math.max(p1.x, p2.x);
+                const minY = Math.min(p1.y, p2.y); const maxY = Math.max(p1.y, p2.y);
+
+                mouse.realX += e.movementX;
+                mouse.realY += e.movementY;
+
+                if (mouse.realX < minX) mouse.realX = minX;
+                if (mouse.realX > maxX) mouse.realX = maxX;
+                if (mouse.realY < minY) mouse.realY = minY;
+                if (mouse.realY > maxY) mouse.realY = maxY;
+
+                mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
+                mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
+
+            } else if (STATE.status !== 'PLAYING') {
+                mouse.realX = e.clientX;
+                mouse.realY = e.clientY;
+            }
+        });
 
         function playHitSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
             osc.frequency.setValueAtTime(800, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
+            g.gain.setValueAtTime(0.3, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+        function playFailSound() {
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+            g.gain.setValueAtTime(0.4, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        function triggerEnvironmentEffect(noteColor) {
-            bgDiamonds.forEach(d => {
-                d.isFlashing = true;
-                d.flashTimer = 1.0; 
-                d.targetColor = noteColor;
-            });
+        function activateAutoMode() {
+            STATE.feverState = 2;
         }
 
-        function triggerComboMilestone(val) {
-            comboPopup.value = val;
-            comboPopup.active = true;
-            comboPopup.life = 0; 
-        }
-
-        function handleMouseMove(e) {
-            if(STATE.isPaused) return; 
-            mouse.realX = e.clientX;
-            mouse.realY = e.clientY;
-            mouse.x = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
-            mouse.y = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
-        }
-
-        function updateScoreVisuals() {
-            document.getElementById('score').innerText = Math.floor(STATE.displayedScore).toLocaleString();
-        }
-
-        function updateComboUI() {
-            document.getElementById('combo').innerText = STATE.combo;
-            
-            const cEl = document.getElementById('combo');
-            cEl.style.transform = "scale(1.5)";
-            setTimeout(() => cEl.style.transform = "scale(1)", 50);
-        }
-
-        /**
-         * RESULT SAVING
-         */
-        function finishGame() {
-            STATE.isPlaying = false;
-            audio.pause();
-
-            const results = {
-                score: Math.floor(STATE.score),
-                maxCombo: STATE.maxCombo,
-                perfects: STATE.perfects,
-                misses: STATE.misses,
-                track: document.getElementById('track-title').innerText,
-                date: new Date().toISOString()
-            };
-
-            localStorage.setItem('chartResults', JSON.stringify(results));
-            
-            console.log("Game Finished. Results Saved:", results);
-
-            if(confirm("Track Complete! Results saved. Go to Results?")) {
-                window.location.href = "results.html"; 
-            } else {
-                location.reload();
-            }
-        }
-
-        /**
-         * 3D PROJECTION
-         */
-        function project(x, y, z, camX, camY) {
-            if (z < 1) z = 1;
-            const scale = CONFIG.fov / (z + CONFIG.fov);
-            const screenX = ((x - camX) * scale) + (canvas.width / 2);
-            const screenY = ((y - camY) * scale) + (canvas.height / 2);
-            return { x: screenX, y: screenY, scale: scale };
-        }
-
-        /**
-         * RENDER FUNCTIONS
-         */
-        function renderDiamonds(cx, cy, dt) {
-            const beatDur = 60 / STATE.bpm;
-            
-            let effectiveTime = STATE.currentTime - (STATE.offset / 1000);
-            if(effectiveTime < 0) effectiveTime = 0;
-            const curBeat = effectiveTime * (STATE.bpm / 60);
-            const floorBeat = Math.floor(curBeat);
-
-            if (floorBeat > lastBeatFloored && floorBeat % 2 === 0) {
-                bgDiamonds.push({
-                    z: 6000, 
-                    currentColor: '#ffffff',
-                    targetColor: '#ffffff',
-                    isFlashing: false,
-                    flashTimer: 0
-                });
-            }
-            lastBeatFloored = floorBeat;
-
-            const travelDuration = 4 * beatDur; 
-            const velocity = 6000 / travelDuration; 
-
-            for (let i = bgDiamonds.length - 1; i >= 0; i--) {
-                let d = bgDiamonds[i];
-                d.z -= velocity * dt; 
-
-                let shakeX = 0;
-                let shakeY = 0;
-
-                if (d.isFlashing) {
-                    d.flashTimer -= dt * 20; 
-                    if (d.flashTimer <= 0) {
-                        d.isFlashing = false;
-                        d.currentColor = d.targetColor;
-                    } else {
-                        d.currentColor = '#ffffff';
-                    }
-                }
-
-                if (d.z < -150) {
-                    bgDiamonds.splice(i, 1);
-                    continue;
-                }
-
-                const p = project(shakeX, shakeY, d.z, cx, cy);
-                const size = 1800 * p.scale; 
-
-                const farFade = Math.max(0, Math.min(1, (6000 - d.z) / 1000));
-                const nearFade = Math.max(0, Math.min(1, d.z / 800));
-                
-                const finalAlpha = farFade * nearFade * 0.4; 
-
-                if (finalAlpha > 0.01) {
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(Math.PI / 4); 
-                    
-                    ctx.strokeStyle = d.currentColor;
-                    ctx.lineWidth = 15 * p.scale; 
-                    ctx.globalAlpha = finalAlpha;
-                    
-                    ctx.beginPath();
-                    ctx.rect(-size/2, -size/2, size, size);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            }
-        }
-
-        function renderComboPopup(dt) {
-            if (!comboPopup.active) return;
-            comboPopup.life += dt / comboPopup.duration;
-            if (comboPopup.life >= 1) {
-                comboPopup.active = false;
-                return;
-            }
-
-            const startScale = 0.5;
-            const endScale = 5.0;
-            const currentScale = startScale + (comboPopup.life * (endScale - startScale));
-            const maxOpacity = 0.05; 
-            const opacity = Math.sin(comboPopup.life * Math.PI) * maxOpacity;
-
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.scale(currentScale, currentScale);
-
-            ctx.fillStyle = "white";
-            ctx.globalAlpha = opacity;
-            ctx.font = "900 120px 'Segoe UI', sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
-            ctx.shadowBlur = 20;
-            ctx.fillText(comboPopup.value, 0, 0);
-            ctx.restore();
-        }
-
-        function drawTunnel(cx, cy) {
-            const dim = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
-            const corners = [
-                { x: -dim, y: -dim }, { x: dim, y: -dim },
-                { x: -dim, y: dim }, { x: dim, y: dim }
-            ];
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            corners.forEach(c => {
-                const p1 = project(c.x, c.y, 0, cx, cy);
-                const p2 = project(c.x, c.y, 2000, cx, cy);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-            });
-            ctx.stroke();
-        }
-
-        function renderGame(dt) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const parallaxStrength = 150;
-            targetCamera.x = mouse.x * parallaxStrength;
-            targetCamera.y = mouse.y * parallaxStrength;
-            camera.x += (targetCamera.x - camera.x) * 0.1;
-            camera.y += (targetCamera.y - camera.y) * 0.1;
-
-            renderDiamonds(camera.x, camera.y, dt);
-            renderComboPopup(dt);
-            drawTunnel(camera.x, camera.y);
-
-            let effectiveTime = STATE.currentTime - (STATE.offset / 1000);
-            const curBeat = effectiveTime * (STATE.bpm / 60);
-
-            if (mapData.length > 0 && curBeat > lastNoteBeat + 4 && !STATE.isFadingOut) {
-                STATE.isFadingOut = true;
-            }
-
-            if (STATE.isFadingOut) {
-                if (audio.volume > 0.01) {
-                    audio.volume = Math.max(0, audio.volume - (dt / 5)); 
-                } else {
-                    audio.volume = 0;
-                    finishGame();
-                    return;
-                }
-            }
-
-            const visibleNotes = mapData.filter(n => {
-                const dist = (n.beat - curBeat) * STATE.scrollSpeed;
-                return dist > -1000 && dist < CONFIG.approachDistance;
-            }).sort((a, b) => b.beat - a.beat);
-
-            visibleNotes.forEach(n => {
-                const dist = (n.beat - curBeat) * STATE.scrollSpeed;
-                const z = CONFIG.hitZ + dist;
-                const color = CONFIG.colors[n.type || 0];
-
-                const offset = Math.floor(CONFIG.gridDim / 2);
-                const wx = (n.col - offset) * CONFIG.gridSpacing;
-                const wy = -(n.row - offset) * CONFIG.gridSpacing;
-
-                const p = project(wx, wy, z, camera.x, camera.y);
-                const size = CONFIG.gridSpacing * p.scale;
-
-                if (STATE.isPlaying && !n.hit && !n.missed) {
-                    const beatWindow = 0.15;
-                    const timeDiff = Math.abs(n.beat - curBeat);
-
-                    if (timeDiff < beatWindow) {
-                        const dx = Math.abs(mouse.realX - p.x);
-                        const dy = Math.abs(mouse.realY - p.y);
-                        
-                        if (dx < size / 2 && dy < size / 2) {
-                            n.hit = true;
-                            STATE.combo++;
-                            if (STATE.combo > STATE.maxCombo) STATE.maxCombo = STATE.combo;
-                            STATE.perfects++;
-                            STATE.score += 100 + (STATE.combo * 10);
-                            
-                            spawnParticles(wx, wy, z, color);
-                            playHitSound();
-                            updateComboUI();
-                            triggerEnvironmentEffect(color);
-
-                            if (STATE.combo > 0 && STATE.combo % 25 === 0) triggerComboMilestone(STATE.combo);
-                        }
-                    } 
-                    else if (n.beat < curBeat - beatWindow) {
-                        n.missed = true;
-                        STATE.combo = 0;
-                        STATE.misses++;
-                        updateComboUI();
-                        comboPopup.active = false;
-                    }
-                }
-
-                if (!n.hit) {
-                    const beatDiff = n.beat - curBeat;
-                    if (beatDiff > 0 && beatDiff < 4) {
-                        const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
-                        const baseSize = CONFIG.gridSpacing * dest.scale;
-                        const approachScale = 1 + (beatDiff * 2.5);
-                        const outSize = baseSize * approachScale;
-
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 2;
-                        ctx.globalAlpha = Math.max(0, 1 - (beatDiff / 4));
-                        ctx.strokeRect(dest.x - outSize / 2, dest.y - outSize / 2, outSize, outSize);
-                        ctx.globalAlpha = 1;
-                    }
-
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    const baseAlpha = Math.min(1, z / 300 + 0.3);
-                    
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = color;
-                    ctx.globalAlpha = baseAlpha;
-                    
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = Math.max(3, size * 0.12);
-                    ctx.strokeRect(-size / 2, -size / 2, size, size);
-
-                    ctx.globalAlpha = baseAlpha * 0.15;
-                    ctx.fillStyle = color;
-                    ctx.fillRect(-size / 2, -size / 2, size, size);
-                    ctx.restore();
-                }
-            });
-
-            const hp = project(0, 0, CONFIG.hitZ, camera.x, camera.y);
-            const totalGridSize = (CONFIG.gridDim * CONFIG.gridSpacing);
-            const hpSize = totalGridSize * hp.scale;
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
-
-            renderParticles(camera.x, camera.y);
-            drawCursor();
-        }
-
-        function drawCursor() {
-            ctx.shadowBlur = 10; ctx.shadowColor = 'white';
-            ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(mouse.realX, mouse.realY, 12, 0, Math.PI * 2); ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-
-        function spawnParticles(x, y, z, c) {
-            for (let i = 0; i < 12; i++) {
-                particles.push({
-                    x, y, z, c,
-                    vx: (Math.random() - 0.5) * 20,
-                    vy: (Math.random() - 0.5) * 20,
-                    vz: (Math.random() - 0.5) * 20,
-                    life: 1
-                });
-            }
-        }
-
-        function renderParticles(cx, cy) {
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.z += p.vz;
-                p.life -= 0.04;
-                if (p.life <= 0) { particles.splice(i, 1); continue; }
-
-                const proj = project(p.x, p.y, p.z, cx, cy);
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.c;
-                ctx.fillRect(proj.x, proj.y, 6 * proj.scale, 6 * proj.scale);
-            }
-            ctx.globalAlpha = 1;
-        }
 
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            if (STATE.status !== 'PLAYING') {
+                mouse.realX = canvas.width / 2;
+                mouse.realY = canvas.height / 2;
+            }
+        }
+
+        function project(x, y, z, cx, cy) {
+            let renderZ = z - CONFIG.cameraZ;
+            let effectiveZ = renderZ + camera.recoil;
+            if (effectiveZ < 1) effectiveZ = 1;
+
+            const scale = CONFIG.fov / (effectiveZ + CONFIG.fov);
+
+            return {
+                x: ((x - cx) * scale) + canvas.width / 2 + viewShake.x,
+                y: ((y - cy) * scale) + canvas.height / 2 + viewShake.y,
+                scale: scale
+            };
+        }
+
+        function getInterpolatedValue(beat, type) {
+            const evs = gameEvents.filter(e => e.type === type).sort((a, b) => a.beat - b.beat);
+            if (evs.length === 0) {
+                if (type === 'speed' || type === 'playfield-op' || type === 'bloom-bright') return 1.0;
+                return 0.0;
+            }
+            if (beat <= evs[0].beat) return evs[0].value;
+            if (beat >= evs[evs.length - 1].beat) return evs[evs.length - 1].value;
+
+            for (let i = 0; i < evs.length - 1; i++) {
+                if (beat >= evs[i].beat && beat < evs[i + 1].beat) {
+                    const start = evs[i]; const end = evs[i + 1];
+                    if (type === 'speed') return start.value;
+                    const progress = (beat - start.beat) / (end.beat - start.beat);
+                    return start.value + (end.value - start.value) * progress;
+                }
+            }
+            return evs[0].value;
+        }
+
+        function getVisualDistance(currentBeat, noteBeat) {
+            if (noteBeat < currentBeat) return -getVisualDistance(noteBeat, currentBeat);
+            let dist = 0; let cursor = currentBeat;
+            const speeds = gameEvents.filter(e => e.type === 'speed').sort((a, b) => a.beat - b.beat);
+            let activeEvents = speeds.filter(e => e.beat > cursor && e.beat < noteBeat);
+            let currentMult = getInterpolatedValue(cursor, 'speed');
+
+            for (let e of activeEvents) {
+                dist += (e.beat - cursor) * STATE.baseSpeed * currentMult;
+                cursor = e.beat; currentMult = e.value;
+            }
+            dist += (noteBeat - cursor) * STATE.baseSpeed * currentMult;
+            return dist;
+        }
+
+        function doHit(x, y, z, c) {
+            camera.recoil = Math.min(camera.recoil + 20, 100);
+            camera.shake = Math.min(camera.shake + 5, 10);
+
+            STATE.hits++;
+            STATE.combo++;
+            UI_ANIM.comboScale = 1.5;
+            if (STATE.combo > STATE.maxCombo) STATE.maxCombo = STATE.combo;
+
+            let multiplier = (STATE.feverState === 1) ? 2 : 1;
+            STATE.score += (100 + (STATE.combo * 10)) * multiplier;
+
+            if (STATE.feverState !== 2) {
+                if (STATE.fever < STATE.feverMax) {
+                    STATE.fever++;
+                    if (STATE.fever >= STATE.feverMax && STATE.feverState === 0) {
+                        STATE.feverState = 1;
+                    }
+                }
+            }
+
+            playHitSound();
+            for (let i = 0; i < 12; i++) particles.push({ x, y, z, c, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, vz: (Math.random() - 0.5) * 20, life: 1 });
+        }
+
+        function handleMiss() {
+            STATE.misses++;
+            STATE.combo = 0;
+            if (STATE.feverState !== 2) {
+                STATE.fever = Math.max(0, STATE.fever - 10);
+            }
+        }
+
+        function drawHUD() {
+            const boxHalf = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
+            const z = CONFIG.hitZ;
+
+            const pTopLeft = project(-boxHalf, -boxHalf, z, camera.x, camera.y);
+            const scale = pTopLeft.scale;
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.font = `bold ${30 * scale}px "Segoe UI"`;
+            ctx.shadowBlur = 10; ctx.shadowColor = 'var(--s)'; ctx.fillStyle = 'white';
+            ctx.fillText(Math.floor(STATE.displayedScore).toLocaleString(), pTopLeft.x, pTopLeft.y - (10 * scale));
+
+            const pRight = project(boxHalf, 0, z, camera.x, camera.y);
+            const r = 50 * scale;
+
+            ctx.save();
+            ctx.translate(pRight.x + (r + 10 * scale), pRight.y);
+
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 4 * scale; ctx.stroke();
+
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + (Math.PI * 2 * (STATE.fever / STATE.feverMax));
+            let color = '#fff';
+            if (STATE.feverState === 1) color = '#ffd700';
+            else if (STATE.feverState === 2) color = '#00ffcc';
+
+            ctx.beginPath(); ctx.arc(0, 0, r, startAngle, endAngle);
+            ctx.strokeStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 15;
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = color; ctx.textBaseline = 'middle';
+            ctx.font = `900 ${24 * scale * UI_ANIM.comboScale}px "Segoe UI"`;
+            ctx.shadowBlur = 0;
+            ctx.fillText(STATE.combo, 0, 0);
+
+            ctx.font = `bold ${12 * scale}px "Segoe UI"`;
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText("COMBO", 0, 20 * scale);
+            ctx.restore();
+
+            if (STATE.feverState === 1) {
+                const pLeft = project(-boxHalf, 0, z, camera.x, camera.y);
+                ctx.save();
+                ctx.translate(pLeft.x - (60 * scale), pLeft.y);
+                ctx.font = `900 ${40 * scale}px "Segoe UI"`;
+                ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText("2x", 0, 0);
+                ctx.restore();
+            }
+
+            if (STATE.feverState === 1) {
+                const pBot = project(0, boxHalf, z, camera.x, camera.y);
+                const alpha = Math.abs(Math.sin(Date.now() / 200));
+                ctx.save();
+                ctx.translate(pBot.x, pBot.y + (30 * scale));
+                ctx.font = `bold ${20 * scale}px "Segoe UI"`;
+                ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+                ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText("[ SPACE TO AUTO ] ", 0, 0);
+                ctx.restore();
+            }
+
+            if (STATE.feverState === 2) {
+                const pBot = project(0, boxHalf, z, camera.x, camera.y);
+                ctx.save();
+                ctx.translate(pBot.x, pBot.y + (30 * scale));
+
+                ctx.font = `900 ${24 * scale}px "Segoe UI"`;
+                ctx.fillStyle = `#00ffcc`;
+                ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 20;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText("AUTO PILOT", 0, 0);
+
+                if (STATE.fever < 25) {
+                    const flash = (Math.sin(Date.now() / 100) + 1) / 2; // Fast flash 0 to 1
+                    ctx.font = `900 ${20 * scale}px "Segoe UI"`;
+                    ctx.fillStyle = `rgba(255, 0, 0, ${flash})`;
+                    ctx.shadowColor = 'red'; ctx.shadowBlur = 20 * flash;
+                    ctx.fillText("⚠ LOW ENERGY ⚠", 0, 30 * scale);
+                }
+
+                ctx.restore();
+            }
         }
 
         function loop() {
-            const now = performance.now();
-            const dt = (now - lastTime) / 1000;
-            lastTime = now;
+            requestAnimationFrame(loop);
 
-            if(STATE.isPaused) {
-                requestAnimationFrame(loop);
-                return;
-            }
+            viewShake.x = (Math.random() - 0.5) * camera.shake;
+            viewShake.y = (Math.random() - 0.5) * camera.shake;
 
-            if (Math.abs(STATE.score - STATE.displayedScore) > 0.5) {
-                STATE.displayedScore += (STATE.score - STATE.displayedScore) * 10 * dt;
-                updateScoreVisuals();
-            } else if (STATE.displayedScore !== STATE.score) {
-                STATE.displayedScore = STATE.score;
-                updateScoreVisuals();
-            }
+            camera.recoil *= 0.5; if (camera.recoil < 0.5) camera.recoil = 0;
+            camera.shake *= 0.5;  if (camera.shake < 0.5) camera.shake = 0;
 
-            if (STATE.isPlaying) {
+            let dt = 1 / 60;
+            if (STATE.status === 'PLAYING') {
                 if (STATE.currentTime < 0) {
                     STATE.currentTime += dt;
-                    if (STATE.currentTime >= 0) {
-                        STATE.currentTime = 0;
-                        audio.currentTime = 0;
-                        audio.play().catch(e => console.log("Autoplay blocked", e));
-                    }
-                } else {
-                    STATE.currentTime = audio.currentTime;
-                    if(audio.ended && !STATE.isFadingOut) {
-                         finishGame();
-                         return; 
+                    const cdVal = Math.ceil(Math.abs(STATE.currentTime));
+                    const cdEl = document.getElementById('countdown');
+                    cdEl.style.display = 'block'; cdEl.innerText = cdVal;
+                    if (STATE.currentTime >= 0) { STATE.currentTime = 0; cdEl.style.display = 'none'; if (ytReady) ytPlayer.playVideo(); }
+                } else if (ytReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                    STATE.currentTime = ytPlayer.getCurrentTime();
+                }
+
+                STATE.displayedScore += (STATE.score - STATE.displayedScore) * 0.1;
+                // fever depletion i keep losing this
+                if (STATE.feverState > 0) {
+                    let drainRate = (STATE.feverState === 1) ? 2 * dt : 5 * dt;
+                    STATE.fever -= drainRate;
+                    if (STATE.fever <= 0) {
+                        STATE.fever = 0; STATE.feverState = 0;
                     }
                 }
-                renderGame(dt);
-            } else {
-                ctx.clearRect(0,0,canvas.width, canvas.height);
+
+                UI_ANIM.comboScale += (1.0 - UI_ANIM.comboScale) * 0.1;
+
+                let tempTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
+                let curBeatLogic = timeToBeat(tempTime);
+
+                if (!STATE.isFading && curBeatLogic > STATE.lastNoteBeat + 4) {
+                    STATE.isFading = true;
+                    STATE.fadeStartTime = Date.now();
+                }
+
+                if (STATE.isFading) {
+                    const elapsed = (Date.now() - STATE.fadeStartTime) / 5000;
+                    if (elapsed >= 1.0) finishGame();
+                    else {
+                        const volume = 100 * (1.0 - elapsed);
+                        if (ytReady) ytPlayer.setVolume(volume);
+                        canvas.style.opacity = (1.0 - elapsed);
+                    }
+                }
             }
 
-            requestAnimationFrame(loop);
-        }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        init();
+            let effectiveTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
+            let curBeat = timeToBeat(effectiveTime);
+
+            const blur = getInterpolatedValue(curBeat, 'bloom-blur');
+            const glow = getInterpolatedValue(curBeat, 'bloom-bright');
+            const dim = getInterpolatedValue(curBeat, 'bg-dim');
+            let op = getInterpolatedValue(curBeat, 'playfield-op');
+            if (STATE.isFading) op = canvas.style.opacity;
+            else document.documentElement.style.setProperty('--playfield-op', op);
+
+            document.documentElement.style.setProperty('--bloom-blur', blur + "px");
+            document.documentElement.style.setProperty('--bloom-bright', glow);
+            document.documentElement.style.setProperty('--bg-dim', dim);
+
+            const pX = -camera.x * 20; const pY = -camera.y * 20;
+            bgVideo.style.transform = `scale(1.1) translate(${pX}px, ${pY}px)`;
+
+            targetCamera.x = mouse.x * 150; targetCamera.y = mouse.y * 150;
+            camera.x += (targetCamera.x - camera.x) * 0.1; camera.y += (targetCamera.y - camera.y) * 0.1;
+
+            const dimSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
+            const pts = [[-dimSize, -dimSize], [dimSize, -dimSize], [-dimSize, dimSize], [dimSize, dimSize]];
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.beginPath();
+            pts.forEach(p => {
+                const p1 = project(p[0], p[1], 0, camera.x, camera.y); const p2 = project(p[0], p[1], 2000, camera.x, camera.y);
+                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            }); ctx.stroke();
+
+            const visible = mapData.filter(n => n.beat > curBeat - 4 && n.beat < curBeat + 32).sort((a, b) => b.beat - a.beat);
+            let autoTarget = null;
+
+            visible.forEach(n => {
+                const dist = getVisualDistance(curBeat, n.beat);
+
+                if (dist < -1000 || dist > CONFIG.approachDistance) return;
+
+                const z = CONFIG.hitZ + dist;
+                const wx = (n.col - 1) * CONFIG.gridSpacing, wy = -(n.row - 1) * CONFIG.gridSpacing;
+                const p = project(wx, wy, z, camera.x, camera.y);
+                const size = CONFIG.gridSpacing * p.scale;
+                const color = CONFIG.colors[n.type];
+
+                if (STATE.status === 'PLAYING' && !n.hit && !n.missed) {
+                    const diff = n.beat - curBeat;
+                    //fever modes
+                    if (STATE.feverState === 2 && n.type < 2) {
+                        if (diff < 1.0 && diff > -0.1) {
+                            if (!autoTarget || diff < autoTarget.diff) autoTarget = { x: p.x, y: p.y, diff: diff };
+                        }
+                        if (Math.abs(diff) < 0.05) { n.hit = true; doHit(wx, wy, z, color); }
+                    }
+                    else if (n.type < 2) {
+                        if (Math.abs(diff) < 0.15) {
+                            if (Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
+                                n.hit = true; doHit(wx, wy, z, color);
+                            }
+                        } else if (diff < -0.15) {
+                            n.missed = true;
+                            handleMiss();
+                        }
+                    }
+                    else if (n.type === 2) {
+                        let wallHit = false;
+                        if (STATE.feverState !== 2) {
+                            if (Math.abs(diff) < 0.1 && Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
+                                n.hit = true;
+                                wallHit = true;
+                                STATE.misses++; STATE.combo = 0;
+                                STATE.fever = Math.max(0, STATE.fever - 20);
+                                playFailSound();
+                                document.getElementById('flash-overlay').style.opacity = 0.2;
+                                setTimeout(() => document.getElementById('flash-overlay').style.opacity = 0, 100);
+                            }
+                        }
+                        if (!wallHit && diff < -0.1) {
+                            n.missed = true;
+                        }
+                    }
+                }
+
+                if (!n.hit) {
+                    if (n.type < 2 && n.beat > curBeat && n.beat < curBeat + 4) {
+                        const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
+                        const aScale = 1 + ((n.beat - curBeat) * 2.5);
+                        const os = CONFIG.gridSpacing * dest.scale * aScale;
+                        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, 1 - (n.beat - curBeat) / 4);
+                        ctx.strokeRect(dest.x - os / 2, dest.y - os / 2, os, os); ctx.globalAlpha = 1;
+                    }
+                    ctx.save(); ctx.translate(p.x, p.y);
+                    const alpha = Math.min(1, z / 300 + 0.3);
+                    ctx.shadowBlur = 15; ctx.shadowColor = color;
+                    if (n.type === 2) {
+                        ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size * 0.05);
+                        ctx.strokeRect(-size / 2, -size / 2, size, size);
+                        ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(size / 2, size / 2); ctx.moveTo(size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.stroke();
+                        ctx.fillStyle = color; ctx.globalAlpha = alpha * 0.2; ctx.fillRect(-size / 2, -size / 2, size, size);
+                    } else {
+                        ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, size * 0.12);
+                        ctx.strokeRect(-size / 2, -size / 2, size, size);
+                        ctx.globalAlpha = alpha * 0.15; ctx.fillStyle = color; ctx.fillRect(-size / 2, -size / 2, size, size);
+                    }
+                    ctx.restore();
+                }
+            });
+
+            if (STATE.feverState === 2 && autoTarget) {
+                mouse.realX += (autoTarget.x - mouse.realX) * 0.5;
+                mouse.realY += (autoTarget.y - mouse.realY) * 0.5;
+                mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
+                mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
+            }
+
+            const hp = project(0, 0, CONFIG.hitZ, camera.x, camera.y);
+            const hpSize = (CONFIG.gridDim * CONFIG.gridSpacing) * hp.scale;
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2;
+            ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
+
+            if (STATE.status === 'PLAYING') drawHUD();
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.z += p.vz; p.life -= 0.04;
+                if (p.life <= 0) { particles.splice(i, 1); continue; }
+                const pr = project(p.x, p.y, p.z, camera.x, camera.y);
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.fillRect(pr.x, pr.y, 6 * pr.scale, 6 * pr.scale);
+            } ctx.globalAlpha = 1;
+
+            if (STATE.status === 'PLAYING') {
+                ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                if (STATE.feverState === 2) { ctx.strokeStyle = 'var(--auto)'; ctx.shadowColor = 'var(--auto)'; }
+                else if (STATE.feverState === 1) { ctx.strokeStyle = 'var(--gold)'; ctx.shadowColor = 'var(--gold)'; }
+                ctx.beginPath(); ctx.arc(mouse.realX, mouse.realY, 12, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+            }
+        }
+        resize();
+        loop();
+
     </script>
 </body>
+
 </html>

@@ -3,309 +3,156 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Chart Editor: Locked Mouse</title>
+    <title>Standalone chart editor v16</title>
     <style>
         :root {
             --p: #ff96d3;
             --s: #78b7ff;
             --w: #ff4444;
-            --bg: #111;
+            --bpm-col: #00ff00;
             --grid-dim: 3;
+            --playfield-op: 1.0;
+            --bg-dim: 0.5;
+            --bloom-blur: 0px;
+            --bloom-bright: 1.0;
         }
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: var(--bg);
-            font-family: 'Segoe UI', sans-serif;
-            color: white;
-            user-select: none;
-        }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
 
-        canvas {
-            display: block;
-        }
-
-        #editor-ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10;
-        }
-
-        .toolbar {
-            pointer-events: auto;
-            background: #222;
-            padding: 10px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            border-bottom: 2px solid #444;
-            flex-wrap: wrap;
-        }
-
-        .toolbar input,
-        .toolbar button,
-        .toolbar select {
-            background: #333;
-            border: 1px solid #555;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .toolbar button:hover {
-            background: #444;
-        }
-
-        .toolbar .separator {
-            width: 1px;
-            height: 24px;
-            background: #555;
-            margin: 0 5px;
-        }
-
-        /* Grouping for clearer UI */
-        .group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(255,255,255,0.05);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        #editor-grid-layer {
-            flex: 1;
-            position: relative;
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #placement-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 0px;
-            border: 2px solid #444;
-        }
-
-        .p-cell {
-            width: 60px;
-            height: 60px;
-            border: 1px solid #444;
-            background: rgba(255, 255, 255, 0.05);
-            cursor: pointer;
-            transition: 0.1s;
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        .p-cell:hover {
-            border-color: white;
-            background: rgba(255, 255, 255, 0.1);
-            z-index: 2;
-        }
-
-        .p-cell.has-note {
-            background: var(--s);
-            border-color: var(--s);
-            box-shadow: 0 0 15px var(--s);
-            z-index: 1;
-        }
-
-        .p-cell.has-note.type-1 {
-            background: var(--p);
-            border-color: var(--p);
-            box-shadow: 0 0 15px var(--p);
-        }
-
-        /* Wall Styling in Editor */
-        .p-cell.has-note.type-2 {
-            background: rgba(255, 68, 68, 0.3);
-            border-color: var(--w);
-            box-shadow: 0 0 15px var(--w);
-            background-image: linear-gradient(45deg, transparent 45%, var(--w) 45%, var(--w) 55%, transparent 55%),
-                              linear-gradient(-45deg, transparent 45%, var(--w) 45%, var(--w) 55%, transparent 55%);
-            background-size: 20px 20px;
-        }
-
-        #timeline-container {
-            height: 120px;
-            background: #1a1a1a;
-            pointer-events: auto;
-            position: relative;
-            border-top: 2px solid #444;
-            overflow: hidden;
-            cursor: col-resize;
-        }
-
-        #game-ui {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25em;
-            justify-content: center;
-            align-items: center;
-            transform: translateX(-50%);
-            text-shadow: 0 0 10px white;
-            pointer-events: none;
-            display: none;
-            z-index: 5;
-            width: 100%;
-        }
-
-        #score-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #combo {
-            font-size: 40px;
-            color: var(--s);
-        }
-
-        #countdown-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 80px;
-            font-weight: 900;
-            color: white;
-            text-shadow: 0 0 20px var(--p);
-            pointer-events: none;
-            z-index: 20;
-            display: none;
-        }
-
-        #flash-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: red;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 30;
-            transition: opacity 0.1s;
-        }
-
-        .controls-hint {
-            position: absolute;
-            bottom: 140px;
-            width: 100%;
-            text-align: center;
-            color: #888;
-            font-size: 14px;
-            pointer-events: none;
-        }
+        #video-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; border: none; }
+        #bg-dim-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; opacity: var(--bg-dim); z-index: 1; pointer-events: none; }
+        #gameCanvas { position: absolute; display: block; top: 0; left: 0; z-index: 5; opacity: var(--playfield-op); }
+        #bloom-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; backdrop-filter: blur(var(--bloom-blur)) brightness(var(--bloom-bright)); }
+        #flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; z-index: 25; transition: opacity 0.1s; }
+    
+        #editor-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; pointer-events: none; background: rgba(0, 0, 0, 0.0); z-index: 10; }
+        .toolbar { pointer-events: auto; background: rgba(34, 34, 34, 0.95); padding: 8px; display: flex; gap: 8px; align-items: center; border-bottom: 2px solid #444; flex-wrap: wrap; row-gap: 8px; }
+        .toolbar input, .toolbar button, .toolbar select { background: #333; border: 1px solid #555; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .toolbar button:hover { background: #555; } .toolbar button:active { background: #222; }
+        .separator { width: 1px; height: 24px; background: #555; margin: 0 2px; }
+        .group { display: flex; align-items: center; gap: 5px; background: rgba(255, 255, 255, 0.05); padding: 3px 6px; border-radius: 4px; }
         
-        .autoplay-label {
-            background: #4a2c4a; 
-            border: 1px solid #754675; 
-            padding: 5px 10px; 
-            border-radius: 4px;
-        }
-        .autoplay-label input {
-            margin-right: 5px;
-        }
+        .bpm-changed { border-color: var(--bpm-col) !important; color: var(--bpm-col) !important; }
+
+        .event-editor { border: 1px solid #78b7ff; background: rgba(0, 20, 40, 0.3); }
+        .event-btn-add { background: #2a5 !important; border-color: #4c8 !important; }
+        .event-btn-del { background: #a22 !important; border-color: #c44 !important; }
+
+        #editor-grid-layer { flex: 1; position: relative; pointer-events: auto; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.4); }
+        #placement-grid { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 0px; border: 2px solid #444; }
+        .p-cell { width: 60px; height: 60px; border: 1px solid #444; background: rgba(255, 255, 255, 0.05); cursor: pointer; box-sizing: border-box; }
+        .p-cell:hover { border-color: white; background: rgba(255, 255, 255, 0.1); }
+        .p-cell.has-note { background: var(--s); border-color: var(--s); box-shadow: 0 0 15px var(--s); }
+        .p-cell.has-note.type-1 { background: var(--p); border-color: var(--p); box-shadow: 0 0 15px var(--p); }
+        .p-cell.has-note.type-2 { background: rgba(255, 68, 68, 0.3); border-color: var(--w); box-shadow: 0 0 15px var(--w); background-image: linear-gradient(45deg, transparent 45%, var(--w) 45%, var(--w) 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, var(--w) 45%, var(--w) 55%, transparent 55%); background-size: 20px 20px; }
+
+        #timeline-container { height: 120px; background: rgba(26, 26, 26, 0.9); pointer-events: auto; position: relative; border-top: 2px solid #444; overflow: hidden; cursor: col-resize; }
+
+        #game-ui { position: absolute; top: 20px; left: 50%; font-size: 24px; font-weight: bold; display: flex; flex-direction: column; gap: 0.25em; justify-content: center; align-items: center; transform: translateX(-50%); text-shadow: 0 0 10px white; pointer-events: none; display: none; z-index: 20; width: 100%; }
+        #countdown-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: 900; color: white; text-shadow: 0 0 20px var(--p); pointer-events: none; z-index: 30; display: none; }
+        .controls-hint { position: absolute; bottom: 140px; width: 100%; text-align: center; color: #888; font-size: 14px; pointer-events: none; }
     </style>
 </head>
 
 <body>
 
+    <div id="video-placeholder"></div>
+    <div id="bg-dim-layer"></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="bloom-layer"></div>
     <div id="flash-overlay"></div>
 
     <div id="editor-ui">
         <div class="toolbar">
-            <button onclick="document.getElementById('audioInput').click()">Load MP3</button>
-            <input type="file" id="audioInput" accept="audio/*" style="display:none">
+            <div class="group">
+                <input type="text" id="ytUrlInput" placeholder="YouTube URL" style="width: 100px">
+                <button onclick="loadYouTubeVideo()">Load</button>
+            </div>
 
             <div class="separator"></div>
 
             <div class="group">
-                <label>BPM <input type="number" id="bpmInput" value="128" style="width: 40px"></label>
+                <label title="BPM at current cursor">BPM 
+                    <input type="number" id="bpmInput" value="128" style="width: 50px" onchange="updateCurrentBPM()">
+                </label>
+                <button onclick="addBPMChange()" title="Add BPM Change at current beat" style="font-weight:bold; color:var(--bpm-col)">+</button>
+                <button onclick="removeBPMChange()" title="Remove current BPM Change">-</button>
+                
+                <div class="separator"></div>
+
                 <label>Snap
                     <select id="snapSelect">
                         <option value="1">1/1</option>
                         <option value="0.5">1/2</option>
                         <option value="0.25" selected>1/4</option>
                         <option value="0.125">1/8</option>
+                        <option value="0.0625">1/16</option>
                     </select>
                 </label>
-                <label title="Chart Offset (ms)">Offset <input type="number" id="offsetInput" value="0" style="width: 40px"></label>
+                <label>Offset <input type="number" id="offsetInput" value="0" style="width: 40px"></label>
+                <label title="Base Scroll Speed">Base Spd <input type="number" id="baseSpeedInput" value="800" step="50" style="width: 50px"></label>
             </div>
 
             <div class="separator"></div>
 
-            <div class="group" style="border: 1px solid #78b7ff">
-                <label title="User Preference: Base Scroll Speed">Base Spd:
-                    <input type="number" id="baseSpeedInput" value="800" step="50" style="width: 50px">
-                </label>
-                <div class="separator"></div>
-                <label title="Chart Multiplier Event at current beat">Mult:
-                    <input type="number" id="multInput" value="1.0" step="0.1" style="width: 40px" onchange="addSpeedEvent()">
-                    x
-                </label>
+            <div class="group event-editor">
+                <select id="eventTargetSelect" onchange="updateEventEditorUI()">
+                    <option value="speed">Speed Mult</option>
+                    <option value="bg-dim">BG Dim</option>
+                    <option value="playfield-op">Field Opacity</option>
+                    <option value="bloom-blur">Bloom Blur</option>
+                    <option value="bloom-bright">Bloom Glow</option>
+                </select>
+
+                <div id="eventValueContainer">
+                    <input type="number" id="eventValInput" step="0.1" style="width:50px">
+                </div>
+
+                <button class="event-btn-add" onclick="addKeyframe()">+</button>
+                <button class="event-btn-del" onclick="removeKeyframe()">-</button>
             </div>
 
             <div class="separator"></div>
 
-            <button id="playPauseBtn" onclick="togglePlay()">Play</button>
+            <button onclick="togglePlay()" id="playPauseBtn">Play</button>
 
             <div style="display:flex; align-items:center; gap:5px; background:#333; padding:0 10px; border-radius:4px; cursor:pointer;"
                 onclick="cycleNoteType()">
                 <span id="typeLabel">Note 1</span>
-                <div style="width: 20px; height: 20px; background: #78b7ff; border: 1px solid white;" id="colorInd"></div>
+                <div style="width: 15px; height: 15px; background: #78b7ff; border: 1px solid white;" id="colorInd">
+                </div>
             </div>
 
             <div class="separator"></div>
 
-            <button onclick="copySelection()" title="Ctrl+C">Copy</button>
-            <button onclick="pasteSelection()" title="Ctrl+V">Paste</button>
-            <button onclick="deleteSelection()" title="Delete">Del</button>
+            <button onclick="undo()" title="Ctrl+Z">Undo</button>
+            <button onclick="redo()" title="Ctrl+Shift+Z">Redo</button>
 
             <div class="separator"></div>
 
-            <button onclick="invertSelectionX()">Flip X</button>
-            <button onclick="invertSelectionY()">Flip Y</button>
+            <button onclick="invertSelectionX()" title="Mirror Horizontal">Inv X</button>
+            <button onclick="invertSelectionY()" title="Flip Vertical">Inv Y</button>
+            <button onclick="invertSelectionColor()" title="Swap Colors">Inv Col</button>
 
             <div class="separator"></div>
 
-            <button onclick="mapData=[]; speedEvents=[{beat:0, mult:1}]; updateGridHighlight();">Clear</button>
-            <button onclick="exportMap()">Save</button>
+            <button onclick="copySelection()">Copy</button>
+            <button onclick="pasteSelection()">Paste</button>
+            <button onclick="deleteSelection()">Del</button>
+            <button onclick="exportMap()" title="Save using Video Title">Save</button>
             <button onclick="document.getElementById('mapInput').click()">Load</button>
             <input type="file" id="mapInput" accept=".json" style="display:none">
 
             <div style="flex:1"></div>
-            
-            <label class="autoplay-label">
-                <input type="checkbox" id="autoplayCheck">Autoplay
-            </label>
-            
-            <button onclick="toggleMode()"
-                style="background:#ff96d3; border:none; color:black; font-weight:bold; padding: 10px 20px;">PLAY</button>
+
+            <label><input type="checkbox" id="autoplayCheck"> Auto</label>
+            <button onclick="toggleMode()" style="background:#ff96d3; border:none; color:black; font-weight:bold; padding: 5px 15px;">PLAY</button>
         </div>
 
         <div id="editor-grid-layer">
-            <div id="placement-grid">
-            </div>
-            <div class="controls-hint">Space: Play | Arrows: Seek | Click: Place/Remove | Type 3 = Wall</div>
-        </div>
+            <div id="placement-grid"></div>
+            <div class="controls-hint">Space: Play | Arrows: Seek | Wheel (Timeline): Zoom | Click (Timeline): Jump to</div>
+        </div> 
 
         <div id="timeline-container">
             <canvas id="timelineCanvas"></canvas>
@@ -313,208 +160,267 @@
     </div>
 
     <div id="game-ui">
-        <div id="score-container">
-            <div id="score">Score: 0</div>
-            <div id="combo">0</div>
-        </div>
         <div id="countdown-overlay">3</div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
-
     <script>
-        /** 
-         * CONFIGURATION
-         */
         const CONFIG = {
-            gridDim: 3,
-            gridSpacing: 100,
-            fov: 350,
-            approachDistance: 8000,
-            hitZ: 50,
-            colors: ['#78b7ff', '#ff96d3', '#ff4444'], // Type 0, 1, 2 (Wall)
+            gridDim: 3, gridSpacing: 100, fov: 350, approachDistance: 8000, hitZ: 50,
+            colors: ['#78b7ff', '#ff96d3', '#ff4444'],
             startBuffer: 3.0
         };
 
         const STATE = {
-            mode: 'EDITOR',
-            bpm: 128,
-            snap: 0.25,
-            offset: 0,
-            baseSpeed: 2000,
-            isPlaying: false,
-            isAutoplay: false,
-            currentTime: 0,
-            duration: 0,
-            noteType: 0,
-            score: 0,
-            combo: 0
+            mode: 'EDITOR', snap: 0.25, offset: 0, baseSpeed: 2000,
+            isPlaying: false, isAutoplay: false, currentTime: 0, duration: 0,
+            noteType: 0, timelineZoom: 1.0
         };
-
         let mapData = [];
-        let speedEvents = [{ beat: 0, mult: 1.0 }];
+        let gameEvents = [
+            { beat: 0, type: 'speed', value: 1.0 },
+            { beat: 0, type: 'bg-dim', value: 0.5 },
+            { beat: 0, type: 'playfield-op', value: 1.0 },
+            { beat: 0, type: 'bloom-blur', value: 0 },
+            { beat: 0, type: 'bloom-bright', value: 1.0 }
+        ];
+        
+        let bpmEvents = [{ beat: 0, bpm: 128, time: 0 }]; 
+
+        function updateBPMCache() {
+            bpmEvents.sort((a, b) => a.beat - b.beat);
+ 
+            if (bpmEvents.length === 0 || bpmEvents[0].beat !== 0) {
+                bpmEvents.unshift({ beat: 0, bpm: 128, time: 0 });
+            }
+            bpmEvents[0].time = 0; 
+            for (let i = 0; i < bpmEvents.length - 1; i++) {
+                const curr = bpmEvents[i];
+                const next = bpmEvents[i+1];
+                const beatsDiff = next.beat - curr.beat;
+                const secondsDiff = beatsDiff * (60 / curr.bpm);
+                next.time = curr.time + secondsDiff;
+            }
+        }
+
+        function timeToBeat(time) {
+            if (time <= 0) return 0;
+            let evt = bpmEvents[0];
+            for (let i = 0; i < bpmEvents.length; i++) {
+                if (time >= bpmEvents[i].time) evt = bpmEvents[i];
+                else break;
+            }
+            return evt.beat + (time - evt.time) * (evt.bpm / 60);
+        }
+
+        function beatToTime(beat) {
+            if (beat <= 0) return 0;
+            let evt = bpmEvents[0];
+            for (let i = 0; i < bpmEvents.length; i++) {
+                if (beat >= bpmEvents[i].beat) evt = bpmEvents[i];
+                else break;
+            }
+            return evt.time + (beat - evt.beat) * (60 / evt.bpm);
+        }
+
+        function getCurrentActiveBPMEvent() {
+            const beat = getCurrentBeat();
+            let evt = bpmEvents[0];
+            for(let i=0; i<bpmEvents.length; i++) {
+                if(beat >= bpmEvents[i].beat - 0.01) evt = bpmEvents[i];
+            }
+            return evt;
+        }
+
+        function updateCurrentBPM() {
+            pushState();
+            const val = parseFloat(document.getElementById('bpmInput').value) || 128;
+            const evt = getCurrentActiveBPMEvent();
+            evt.bpm = val;
+            updateBPMCache();
+            updateGridHighlight();
+        }
+
+        function addBPMChange() {
+            pushState();
+            const curBeat = getSnappedBeat();
+            bpmEvents = bpmEvents.filter(e => Math.abs(e.beat - curBeat) > 0.01);
+
+            const prev = getCurrentActiveBPMEvent();
+            bpmEvents.push({ beat: curBeat, bpm: prev.bpm, time: 0 });
+            updateBPMCache();
+            updateBPMUI();
+        }
+
+        function removeBPMChange() {
+            const curBeat = getSnappedBeat();
+            if (curBeat === 0) return; 
+            pushState();
+            bpmEvents = bpmEvents.filter(e => Math.abs(e.beat - curBeat) > 0.01);
+            updateBPMCache();
+            updateBPMUI();
+        }
+        
+        function updateBPMUI() {
+            const evt = getCurrentActiveBPMEvent();
+            const input = document.getElementById('bpmInput');
+            if (document.activeElement !== input) {
+                input.value = evt.bpm;
+            }
+            const beat = getSnappedBeat();
+            const onChange = bpmEvents.some(e => Math.abs(e.beat - beat) < 0.01);
+            if(onChange && beat > 0) input.classList.add('bpm-changed');
+            else input.classList.remove('bpm-changed');
+        }
+
+        const historyStack = [];
+        let historyIndex = -1;
+
+        function pushState() {
+            if (historyIndex < historyStack.length - 1) {
+                historyStack.splice(historyIndex + 1);
+            }
+            const snapshot = JSON.stringify({ notes: mapData, events: gameEvents, bpm: bpmEvents });
+            historyStack.push(snapshot);
+            historyIndex++;
+            if (historyStack.length > 50) { historyStack.shift(); historyIndex--; }
+        }
+
+        function undo() {
+            if (historyIndex > 0) { historyIndex--; restoreState(historyStack[historyIndex]); }
+        }
+        function redo() {
+            if (historyIndex < historyStack.length - 1) { historyIndex++; restoreState(historyStack[historyIndex]); }
+        }
+        function restoreState(jsonStr) {
+            const d = JSON.parse(jsonStr);
+            mapData = d.notes;
+            gameEvents = d.events;
+            if(d.bpm) { bpmEvents = d.bpm; updateBPMCache(); }
+            updateGridHighlight();
+            updateEventEditorUI();
+            updateBPMUI();
+        }
 
         let selection = { active: false, startBeat: 0, endBeat: 0 };
         let clipboard = null;
-        
-        // Tracking for randomized autoplay
         let autoplayTarget = { note: null, offX: 0, offY: 0 };
 
-        const audio = new Audio();
-        audio.addEventListener('loadedmetadata', () => STATE.duration = audio.duration);
-        audio.addEventListener('ended', () => {
-            STATE.isPlaying = false;
-            if (STATE.mode === 'GAME') toggleMode();
-        });
+        let ytPlayer; let ytReady = false;
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let lastTime = performance.now();
-
-        function playHitSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('video-placeholder', {
+                height: '100%', width: '100%', videoId: '',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3 },
+                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+            });
+        }
+        function onPlayerReady() { ytReady = true; STATE.duration = ytPlayer.getDuration(); }
+        function onPlayerStateChange(e) {
+            if (e.data === YT.PlayerState.ENDED) { STATE.isPlaying = false; if (STATE.mode === 'GAME') toggleMode(); }
+        }
+        function loadYouTubeVideo() {
+            let input = document.getElementById('ytUrlInput').value;
+            let match = input.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+            let id = (match && match[2].length === 11) ? match[2] : input;
+            if (ytReady && id.length > 0) {
+                ytPlayer.loadVideoById(id); ytPlayer.pauseVideo();
+                STATE.isPlaying = false; STATE.currentTime = 0;
+            }
         }
 
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playHitSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            g.gain.setValueAtTime(0.3, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
         function playFailSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+            g.gain.setValueAtTime(0.4, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const tCanvas = document.getElementById('timelineCanvas');
         const tCtx = tCanvas.getContext('2d');
+        let mouse = { x: 0, y: 0, realX: 0, realY: 0 };
+        let camera = { x: 0, y: 0 }, targetCamera = { x: 0, y: 0 };
 
-        const mouse = { x: 0, y: 0, realX: 0, realY: 0 };
-        const camera = { x: 0, y: 0 };
-        const targetCamera = { x: 0, y: 0 };
-
-        /**
-         * INIT
-         */
         function init() {
-            resize();
-            window.addEventListener('resize', resize);
+            resize(); window.addEventListener('resize', resize);
             createGridUI();
-            requestAnimationFrame(loop);
+            updateBPMCache();
+            pushState();
 
-            document.getElementById('bpmInput').addEventListener('change', (e) => STATE.bpm = parseFloat(e.target.value) || 128);
             document.getElementById('snapSelect').addEventListener('change', (e) => STATE.snap = parseFloat(e.target.value));
-            document.getElementById('offsetInput').addEventListener('change', (e) => STATE.offset = parseFloat(e.target.value) || 0);
+            document.getElementById('offsetInput').addEventListener('change', (e) => {
+                STATE.offset = parseFloat(e.target.value) || 0;
+                updateGridHighlight(); 
+            });
             document.getElementById('baseSpeedInput').addEventListener('change', (e) => STATE.baseSpeed = parseFloat(e.target.value) || 800);
-            
             document.getElementById('autoplayCheck').addEventListener('change', (e) => STATE.isAutoplay = e.target.checked);
 
-            document.getElementById('audioInput').addEventListener('change', e => {
-                const f = e.target.files[0];
-                if (f) audio.src = URL.createObjectURL(f);
-            });
-            document.getElementById('mapInput').addEventListener('change', e => {
-                const f = e.target.files[0];
-                if (f) {
-                    const r = new FileReader();
-                    r.onload = ev => {
-                        try {
-                            const d = JSON.parse(ev.target.result);
-                            STATE.bpm = d.bpm;
-                            mapData = d.notes;
-                            STATE.offset = d.offset || 0;
-                            if(d.speedEvents) {
-                                speedEvents = d.speedEvents.map(ev => {
-                                    if(ev.val !== undefined && ev.mult === undefined) {
-                                        return { beat: ev.beat, mult: ev.val / 800 }; 
-                                    }
-                                    return ev;
-                                });
-                            } else {
-                                speedEvents = [{beat:0, mult: 1.0}];
-                            }
-                            document.getElementById('bpmInput').value = STATE.bpm;
-                            document.getElementById('offsetInput').value = STATE.offset;
-                            updateMultInput();
-                        } catch (err) { 
-                            console.error(err);
-                            alert("Error loading JSON"); 
-                        }
-                    };
-                    r.readAsText(f);
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === null && STATE.mode === 'GAME' && STATE.isPlaying) {
+                    togglePlay();
                 }
             });
 
+            document.getElementById('mapInput').addEventListener('change', loadMapFile);
+
             window.addEventListener('keydown', e => {
+                const ctrl = e.ctrlKey || e.metaKey;
                 if (STATE.mode === 'EDITOR') {
                     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
                     if (e.code === 'ArrowLeft') seek(-STATE.snap);
                     if (e.code === 'ArrowRight') seek(STATE.snap);
 
-                    if ((e.ctrlKey || e.metaKey) && e.code === 'KeyC') copySelection();
-                    if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') pasteSelection();
+                    if (ctrl && e.shiftKey && e.code === 'KeyZ') { e.preventDefault(); redo(); }
+                    else if (ctrl && e.code === 'KeyZ') { e.preventDefault(); undo(); }
+
+                    if (ctrl && e.code === 'KeyC') copySelection();
+                    if (ctrl && e.code === 'KeyV') pasteSelection();
+                    if (ctrl && e.code === 'KeyX') { copySelection(); deleteSelection(); }
                     if (e.code === 'Delete' || e.code === 'Backspace') deleteSelection();
                     if (e.code === 'Tab') { e.preventDefault(); cycleNoteType(); }
-                } else {
-                    if (e.code === 'Escape') toggleMode();
-                }
+                } else if (e.code === 'Escape') toggleMode();
             });
 
-            // Re-engage pointer lock if clicking during game
-            canvas.addEventListener('mousedown', () => {
-                if(STATE.mode === 'GAME' && document.pointerLockElement !== canvas) {
-                    canvas.requestPointerLock();
-                }
-            });
-            
-            // Handle Pointer Lock changes (e.g. user presses ESC)
-            document.addEventListener('pointerlockchange', () => {
-                if(STATE.mode === 'GAME' && document.pointerLockElement !== canvas) {
-                    // Lock lost. We could pause here or force editor mode.
-                    // For now, we rely on the Escape key handler to toggle mode,
-                    // but if they Alt-Tab out, this is where you'd pause.
-                }
-            });
+            setupMouseInput();
+            updateEventEditorUI();
+            requestAnimationFrame(loop);
+        }
 
+        function setupMouseInput() {
             window.addEventListener('mousemove', e => {
                 if (STATE.mode === 'GAME' && STATE.isAutoplay) return;
-
-                // --- MODIFIED: Pointer Lock Logic ---
                 if (document.pointerLockElement === canvas) {
-                    // Add Movement Delta to accumulated position
-                    mouse.realX += e.movementX;
-                    mouse.realY += e.movementY;
-
-                    // Clamp to canvas boundaries
-                    if(mouse.realX < 0) mouse.realX = 0;
-                    if(mouse.realX > canvas.width) mouse.realX = canvas.width;
-                    if(mouse.realY < 0) mouse.realY = 0;
-                    if(mouse.realY > canvas.height) mouse.realY = canvas.height;
-
-                    // Normalize (-1 to 1)
+                    let minX = 0, maxX = canvas.width, minY = 0, maxY = canvas.height;
+                    if (STATE.mode === 'GAME') {
+                        const fieldSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
+                        const p1 = project(-fieldSize, -fieldSize, CONFIG.hitZ, camera.x, camera.y);
+                        const p2 = project(fieldSize, fieldSize, CONFIG.hitZ, camera.x, camera.y);
+                        minX = Math.min(p1.x, p2.x); maxX = Math.max(p1.x, p2.x);
+                        minY = Math.min(p1.y, p2.y); maxY = Math.max(p1.y, p2.y);
+                    }
+                    mouse.realX += e.movementX; mouse.realY += e.movementY;
+                    if (mouse.realX < minX) mouse.realX = minX; if (mouse.realX > maxX) mouse.realX = maxX;
+                    if (mouse.realY < minY) mouse.realY = minY; if (mouse.realY > maxY) mouse.realY = maxY;
                     mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
                     mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
-                } 
-                else {
-                    // Standard cursor tracking (Editor)
-                    mouse.realX = e.clientX;
-                    mouse.realY = e.clientY;
-
+                } else {
+                    mouse.realX = e.clientX; mouse.realY = e.clientY;
                     if (STATE.mode === 'GAME') {
                         mouse.x = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
                         mouse.y = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
@@ -525,131 +431,218 @@
                 }
             });
 
+            let isDrag = false, dragMode = '';
             const tl = document.getElementById('timeline-container');
-            let isDrag = false;
-            let dragMode = '';
-
-            const getBeatFromMouse = (clientX) => {
-                const rect = tCanvas.getBoundingClientRect();
-                const centerX = rect.width / 2;
-                const pxPerBeat = 100;
-                const curBeat = STATE.currentTime * (STATE.bpm / 60);
-                const dx = clientX - rect.left - centerX;
-                const beatOffset = dx / pxPerBeat;
-                return curBeat + beatOffset;
-            };
-
-            const snapBeat = (val) => {
-                return Math.round(val / STATE.snap) * STATE.snap;
-            };
 
             tl.addEventListener('mousedown', e => {
                 isDrag = true;
                 if (e.shiftKey) {
-                    dragMode = 'select';
-                    selection.active = true;
-                    const b = getBeatFromMouse(e.clientX);
-                    const sb = snapBeat(b);
-                    selection.startBeat = sb;
-                    selection.endBeat = sb;
+                    dragMode = 'select'; selection.active = true;
+                    selection.startBeat = selection.endBeat = snapBeat(getBeatFromMouse(e.clientX));
                 } else {
-                    dragMode = 'scrub';
-                    selection.active = false;
-                    doScrub(e);
+                    dragMode = 'scrub'; selection.active = false; doScrub(e);
                 }
             });
-
-            const doScrub = (e) => {
-                const rect = tCanvas.getBoundingClientRect();
-                const centerX = rect.width / 2;
-                const pxPerBeat = 100;
-                const dx = e.clientX - rect.left - centerX;
-                const beatOffset = dx / pxPerBeat;
-                const timeOffset = beatOffset * (60 / STATE.bpm);
-
-                let newTime = STATE.currentTime + timeOffset;
-                if (newTime < 0) newTime = 0;
-                if (newTime > STATE.duration) newTime = STATE.duration;
-
-                audio.currentTime = newTime;
-                STATE.currentTime = newTime;
-                updateMultInput();
-            };
-
+            tl.addEventListener('wheel', e => {
+                e.preventDefault();
+                const zoomFactor = 1.1;
+                if (e.deltaY < 0) STATE.timelineZoom = Math.min(5.0, STATE.timelineZoom * zoomFactor);
+                else STATE.timelineZoom = Math.max(0.1, STATE.timelineZoom / zoomFactor);
+            });
             window.addEventListener('mousemove', e => {
-                if (isDrag) {
-                    if (dragMode === 'scrub') {
-                        doScrub(e);
-                    } else if (dragMode === 'select') {
-                        const b = getBeatFromMouse(e.clientX);
-                        selection.endBeat = snapBeat(b);
-                    }
-                }
+                if (!isDrag) return;
+                if (dragMode === 'scrub') doScrub(e);
+                else if (dragMode === 'select') selection.endBeat = snapBeat(getBeatFromMouse(e.clientX));
             });
-
-            window.addEventListener('mouseup', () => {
-                isDrag = false;
-                if (selection.active) {
-                    if (selection.startBeat > selection.endBeat) {
-                        const temp = selection.startBeat;
-                        selection.startBeat = selection.endBeat;
-                        selection.endBeat = temp;
-                    }
-                }
-            });
+            window.addEventListener('mouseup', () => { isDrag = false; });
         }
 
-        /**
-         * SPEED LOGIC
-         */
-        function getCurrentMult(beat) {
-            let val = 1.0;
-            for(let e of speedEvents) {
-                if(e.beat <= beat) val = e.mult;
-                else break; 
+        const getEffectiveTime = () => STATE.currentTime - (STATE.offset / 1000);
+        const getCurrentBeat = () => timeToBeat(getEffectiveTime());
+
+        const getBeatFromMouse = (x) => {
+            const rect = tCanvas.getBoundingClientRect();
+            const center = rect.width / 2;
+            const curBeat = getCurrentBeat();
+            return curBeat + (x - rect.left - center) / (100 * STATE.timelineZoom);
+        }
+        
+        const snapBeat = (v) => Math.round(v / STATE.snap) * STATE.snap;
+
+        const doScrub = (e) => {
+            let b = getBeatFromMouse(e.clientX);
+            let effectiveTime = beatToTime(b);
+            let rawTime = effectiveTime + (STATE.offset / 1000);
+
+            if (rawTime < 0) rawTime = 0;
+            if (ytReady && rawTime > ytPlayer.getDuration()) rawTime = ytPlayer.getDuration();
+            
+            STATE.currentTime = rawTime;
+            if (ytReady) ytPlayer.seekTo(rawTime, true);
+            updateEventEditorUI();
+            updateBPMUI();
+        }
+
+        function seek(beatDelta) {
+            let currentBeat = getCurrentBeat();
+            let targetBeat = currentBeat + beatDelta;
+            let targetEffectiveTime = beatToTime(targetBeat);
+            let targetRawTime = targetEffectiveTime + (STATE.offset / 1000);
+
+            if (targetRawTime < 0) targetRawTime = 0;
+            STATE.currentTime = targetRawTime;
+            if (ytReady) ytPlayer.seekTo(targetRawTime, true);
+            updateEventEditorUI();
+            updateBPMUI();
+        }
+
+        function updateEventEditorUI() {
+            const target = document.getElementById('eventTargetSelect').value;
+            const curBeat = getCurrentBeat();
+            const val = getInterpolatedValue(curBeat, target);
+
+            const container = document.getElementById('eventValueContainer');
+            let input = document.getElementById('eventValInput');
+            if (!input) {
+                input = document.createElement('input');
+                input.id = 'eventValInput';
+                input.style.width = '60px';
+                container.appendChild(input);
             }
-            return val;
+            if (target === 'bloom-blur') { input.type = "number"; input.step = "1"; input.min = "0"; }
+            else if (target === 'speed') { input.type = "number"; input.step = "0.1"; }
+            else { input.type = "number"; input.step = "0.1"; input.min = "0"; }
+
+            if (document.activeElement !== input) {
+                input.value = Math.round(val * 100) / 100;
+            }
         }
 
-        function addSpeedEvent() {
+        function addKeyframe() {
+            pushState();
+            const target = document.getElementById('eventTargetSelect').value;
             const beat = getSnappedBeat();
-            const val = parseFloat(document.getElementById('multInput').value);
-            speedEvents = speedEvents.filter(e => Math.abs(e.beat - beat) > 0.01);
-            speedEvents.push({ beat: beat, mult: val });
-            speedEvents.sort((a,b) => a.beat - b.beat);
-            if(speedEvents[0].beat > 0) {
-                speedEvents.unshift({ beat: 0, mult: 1.0 });
+            const val = parseFloat(document.getElementById('eventValInput').value);
+
+            gameEvents = gameEvents.filter(e => !(e.type === target && Math.abs(e.beat - beat) < 0.01));
+            gameEvents.push({ beat: beat, type: target, value: val });
+            gameEvents.sort((a, b) => a.beat - b.beat);
+
+            if (!gameEvents.find(e => e.beat === 0 && e.type === target) && beat > 0) {
+                gameEvents.unshift({ beat: 0, type: target, value: (target === 'speed' || target === 'playfield-op' || target === 'bloom-bright') ? 1 : 0 });
+            }
+            gameEvents.sort((a, b) => a.beat - b.beat);
+        }
+
+        function removeKeyframe() {
+            pushState();
+            const target = document.getElementById('eventTargetSelect').value;
+            const beat = getSnappedBeat();
+            gameEvents = gameEvents.filter(e => !(e.type === target && Math.abs(e.beat - beat) < 0.01));
+
+            const remaining = gameEvents.filter(e => e.type === target);
+            if (remaining.length === 0) {
+                gameEvents.push({ beat: 0, type: target, value: (target === 'speed' || target === 'playfield-op' || target === 'bloom-bright') ? 1 : 0 });
             }
         }
 
-        function updateMultInput() {
-            const curBeat = STATE.currentTime * (STATE.bpm / 60);
-            const s = getCurrentMult(curBeat);
-            if(document.activeElement !== document.getElementById('multInput')) {
-                document.getElementById('multInput').value = s;
+        function getInterpolatedValue(beat, type) {
+            const evs = gameEvents.filter(e => e.type === type).sort((a, b) => a.beat - b.beat);
+            if (evs.length === 0) {
+                if (type === 'speed' || type === 'playfield-op' || type === 'bloom-bright') return 1.0;
+                return 0.0;
             }
+            if (beat <= evs[0].beat) return evs[0].value;
+            if (beat >= evs[evs.length - 1].beat) return evs[evs.length - 1].value;
+
+            for (let i = 0; i < evs.length - 1; i++) {
+                if (beat >= evs[i].beat && beat < evs[i + 1].beat) {
+                    const start = evs[i]; const end = evs[i + 1];
+                    if (type === 'speed') return start.value;
+                    const progress = (beat - start.beat) / (end.beat - start.beat);
+                    return start.value + (end.value - start.value) * progress;
+                }
+            }
+            return evs[0].value;
+        }
+
+        function updateVisualsForTime(time) {
+            const beat = timeToBeat(time);
+            const blur = getInterpolatedValue(beat, 'bloom-blur');
+            const glow = getInterpolatedValue(beat, 'bloom-bright');
+            const dim = getInterpolatedValue(beat, 'bg-dim');
+            const op = getInterpolatedValue(beat, 'playfield-op');
+            document.documentElement.style.setProperty('--bloom-blur', blur + "px");
+            document.documentElement.style.setProperty('--bloom-bright', glow);
+            document.documentElement.style.setProperty('--bg-dim', dim);
+            document.documentElement.style.setProperty('--playfield-op', op);
         }
 
         function getVisualDistance(currentBeat, noteBeat) {
-            if(noteBeat < currentBeat) {
-                 return -getVisualDistance(noteBeat, currentBeat);
-            }
+            if (noteBeat < currentBeat) return -getVisualDistance(noteBeat, currentBeat);
             let dist = 0;
             let cursor = currentBeat;
-            let activeEvents = speedEvents.filter(e => e.beat > cursor && e.beat < noteBeat);
-            let currentMult = getCurrentMult(cursor);
-            for(let e of activeEvents) {
+            const speeds = gameEvents.filter(e => e.type === 'speed').sort((a, b) => a.beat - b.beat);
+            let activeEvents = speeds.filter(e => e.beat > cursor && e.beat < noteBeat);
+            let currentMult = getInterpolatedValue(cursor, 'speed');
+            for (let e of activeEvents) {
                 dist += (e.beat - cursor) * STATE.baseSpeed * currentMult;
-                cursor = e.beat;
-                currentMult = e.mult;
+                cursor = e.beat; currentMult = e.value;
             }
             dist += (noteBeat - cursor) * STATE.baseSpeed * currentMult;
             return dist;
         }
 
-        /**
-         * EDITOR LOGIC
-         */
+        function getSnappedBeat() { 
+            return Math.round(getCurrentBeat() / STATE.snap) * STATE.snap; 
+        }
+
+        function toggleNoteAtCursor(col, row) {
+            pushState();
+            const beat = getSnappedBeat();
+            const idx = mapData.findIndex(n => Math.abs(n.beat - beat) < 0.01 && n.col === col && n.row === row);
+            if (idx !== -1) mapData.splice(idx, 1);
+            else {
+                mapData.push({ beat, col, row, type: STATE.noteType });
+                playHitSound();
+                STATE.noteType = (STATE.noteType === 0) ? 1 : 0;
+                updateTypeLabel();
+            }
+            updateGridHighlight();
+        }
+
+        function cycleNoteType() { STATE.noteType = (STATE.noteType + 1) % 3; updateTypeLabel(); }
+        function updateTypeLabel() {
+            const labels = ["Note 1", "Note 2", "Wall"];
+            document.getElementById('typeLabel').innerText = labels[STATE.noteType];
+            document.getElementById('colorInd').style.background = CONFIG.colors[STATE.noteType];
+        }
+
+        function invertSelectionX() {
+            if (!selection.active) return;
+            pushState();
+            const s = Math.min(selection.startBeat, selection.endBeat);
+            const e = Math.max(selection.startBeat, selection.endBeat);
+            mapData.forEach(n => { if (n.beat >= s - 0.01 && n.beat <= e + 0.01) n.col = (CONFIG.gridDim - 1) - n.col; });
+            updateGridHighlight();
+        }
+        function invertSelectionY() {
+            if (!selection.active) return;
+            pushState();
+            const s = Math.min(selection.startBeat, selection.endBeat);
+            const e = Math.max(selection.startBeat, selection.endBeat);
+            mapData.forEach(n => { if (n.beat >= s - 0.01 && n.beat <= e + 0.01) n.row = (CONFIG.gridDim - 1) - n.row; });
+            updateGridHighlight();
+        }
+        function invertSelectionColor() {
+            if (!selection.active) return;
+            pushState();
+            const s = Math.min(selection.startBeat, selection.endBeat);
+            const e = Math.max(selection.startBeat, selection.endBeat);
+            mapData.forEach(n => { if (n.beat >= s - 0.01 && n.beat <= e + 0.01) { if (n.type === 0) n.type = 1; else if (n.type === 1) n.type = 0; } });
+            updateGridHighlight();
+        }
+
         function copySelection() {
             if (!selection.active) return;
             const s = Math.min(selection.startBeat, selection.endBeat);
@@ -657,604 +650,340 @@
             const notes = mapData.filter(n => n.beat >= s - 0.01 && n.beat <= e + 0.01);
             clipboard = notes.map(n => ({ ...n, beat: n.beat - s }));
         }
-
         function pasteSelection() {
             if (!clipboard || clipboard.length === 0) return;
+            pushState();
             const curBeat = getSnappedBeat();
             clipboard.forEach(n => {
                 const newBeat = curBeat + n.beat;
-                const exists = mapData.find(ex => Math.abs(ex.beat - newBeat) < 0.01 && ex.col === n.col && ex.row === n.row);
-                if (!exists) {
+                if (!mapData.find(ex => Math.abs(ex.beat - newBeat) < 0.01 && ex.col === n.col && ex.row === n.row)) {
                     mapData.push({ beat: newBeat, col: n.col, row: n.row, type: n.type });
                 }
             });
             updateGridHighlight();
         }
-
         function deleteSelection() {
             if (!selection.active) return;
+            pushState();
             const s = Math.min(selection.startBeat, selection.endBeat);
             const e = Math.max(selection.startBeat, selection.endBeat);
             mapData = mapData.filter(n => n.beat < s - 0.01 || n.beat > e + 0.01);
+            gameEvents = gameEvents.filter(ev => (ev.beat === 0) || (ev.beat < s - 0.01 || ev.beat > e + 0.01));
             selection.active = false;
             updateGridHighlight();
         }
 
-        function invertSelectionX() {
-            if (!selection.active) return;
-            processSelection(n => n.col = (CONFIG.gridDim - 1) - n.col);
-        }
-
-        function invertSelectionY() {
-            if (!selection.active) return;
-            processSelection(n => n.row = (CONFIG.gridDim - 1) - n.row);
-        }
-
-        function processSelection(fn) {
-             const s = Math.min(selection.startBeat, selection.endBeat);
-             const e = Math.max(selection.startBeat, selection.endBeat);
-             mapData.forEach(n => {
-                if (n.beat >= s - 0.01 && n.beat <= e + 0.01) fn(n);
-             });
-             updateGridHighlight();
-        }
-
         function createGridUI() {
-            const grid = document.getElementById('placement-grid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('placement-grid'); grid.innerHTML = '';
             for (let r = 0; r < CONFIG.gridDim; r++) {
                 for (let c = 0; c < CONFIG.gridDim; c++) {
-                    let cell = document.createElement('div');
-                    cell.className = 'p-cell';
-                    cell.dataset.r = r;
-                    cell.dataset.c = c;
+                    let cell = document.createElement('div'); cell.className = 'p-cell';
+                    cell.dataset.r = r; cell.dataset.c = c;
                     cell.onclick = () => toggleNoteAtCursor(c, r);
                     grid.appendChild(cell);
                 }
             }
         }
-
-        function cycleNoteType() {
-            STATE.noteType = (STATE.noteType + 1) % 3;
-            const labels = ["Note 1", "Note 2", "Wall"];
-            document.getElementById('typeLabel').innerText = labels[STATE.noteType];
-            document.getElementById('colorInd').style.background = CONFIG.colors[STATE.noteType];
-        }
-
-        function seek(beatDelta) {
-            const secPerBeat = 60 / STATE.bpm;
-            let newTime = audio.currentTime + (beatDelta * secPerBeat);
-            if (newTime < 0) newTime = 0;
-            audio.currentTime = newTime;
-            STATE.currentTime = newTime;
-            updateMultInput();
-        }
-
-        function getSnappedBeat() {
-            const beat = STATE.currentTime * (STATE.bpm / 60);
-            return Math.round(beat / STATE.snap) * STATE.snap;
-        }
-
-        function toggleNoteAtCursor(col, row) {
-            const beat = getSnappedBeat();
-            const idx = mapData.findIndex(n => Math.abs(n.beat - beat) < 0.01 && n.col === col && n.row === row);
-
-            if (idx !== -1) {
-                mapData.splice(idx, 1);
-            } else {
-                mapData.push({ beat, col, row, type: STATE.noteType });
-                playHitSound();
-                if (STATE.noteType === 0) {
-                    STATE.noteType = 1;
-                } else if (STATE.noteType === 1) {
-                    STATE.noteType = 0;
-                }
-                const labels = ["Note 1", "Note 2", "Wall"];
-                document.getElementById('typeLabel').innerText = labels[STATE.noteType];
-                document.getElementById('colorInd').style.background = CONFIG.colors[STATE.noteType];
-            }
-            updateGridHighlight();
-        }
-
         function updateGridHighlight() {
             const beat = getSnappedBeat();
             document.querySelectorAll('.p-cell').forEach(c => {
                 c.className = 'p-cell';
-                const r = parseInt(c.dataset.r);
-                const col = parseInt(c.dataset.c);
-                const note = mapData.find(n => Math.abs(n.beat - beat) < 0.01 && n.col === col && n.row === r);
-                if (note) {
-                    c.classList.add('has-note');
-                    if (note.type === 1) c.classList.add('type-1');
-                    if (note.type === 2) c.classList.add('type-2');
-                }
+                const n = mapData.find(n => Math.abs(n.beat - beat) < 0.01 && n.col == c.dataset.c && n.row == c.dataset.r);
+                if (n) { c.classList.add('has-note'); if (n.type === 1) c.classList.add('type-1'); if (n.type === 2) c.classList.add('type-2'); }
             });
         }
 
         function drawTimeline() {
-            tCtx.fillStyle = '#111';
-            tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
-
-            const pxPerBeat = 100;
+            tCtx.fillStyle = '#111'; tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
+            const pxPerBeat = 100 * STATE.timelineZoom;
             const cx = tCanvas.width / 2;
-            const curBeat = STATE.currentTime * (STATE.bpm / 60);
-
-            const visBeats = (cx / pxPerBeat) + 1;
-            const startB = Math.floor(curBeat - visBeats);
-            const endB = Math.floor(curBeat + visBeats);
+            const curBeat = getCurrentBeat();
+            const vis = (cx / pxPerBeat) + 1;
 
             if (selection.active) {
                 const s = Math.min(selection.startBeat, selection.endBeat);
                 const e = Math.max(selection.startBeat, selection.endBeat);
-                const sx = cx + (s - curBeat) * pxPerBeat;
-                const ex = cx + (e - curBeat) * pxPerBeat;
-
                 tCtx.fillStyle = 'rgba(120, 183, 255, 0.2)';
-                tCtx.fillRect(sx, 0, ex - sx, tCanvas.height);
+                tCtx.fillRect(cx + (s - curBeat) * pxPerBeat, 0, (e - s) * pxPerBeat, tCanvas.height);
             }
 
-            for (let b = startB; b <= endB; b++) {
+            for (let b = Math.floor(curBeat - vis); b <= Math.ceil(curBeat + vis); b++) {
                 const x = cx + (b - curBeat) * pxPerBeat;
-                tCtx.strokeStyle = (b % 4 === 0) ? '#666' : '#333';
-                tCtx.lineWidth = (b % 4 === 0) ? 2 : 1;
+                tCtx.strokeStyle = (b % 4 === 0) ? '#666' : '#333'; tCtx.lineWidth = (b % 4 === 0) ? 2 : 1;
                 tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, tCanvas.height); tCtx.stroke();
-
-                if (b >= 0 && b % 4 === 0) {
-                    tCtx.fillStyle = '#888';
-                    tCtx.fillText(b, x + 5, 12);
-                }
+                if (b >= 0 && b % 4 === 0) { tCtx.fillStyle = '#888'; tCtx.fillText(b, x + 5, 12); }
             }
             
-            speedEvents.forEach(e => {
+            bpmEvents.forEach(e => {
                 const x = cx + (e.beat - curBeat) * pxPerBeat;
-                if(x > -10 && x < tCanvas.width + 10) {
-                    tCtx.fillStyle = '#ffd700';
-                    tCtx.beginPath();
-                    tCtx.moveTo(x, tCanvas.height - 10);
-                    tCtx.lineTo(x-5, tCanvas.height);
-                    tCtx.lineTo(x+5, tCanvas.height);
-                    tCtx.fill();
-                    tCtx.fillStyle = '#ffd700';
-                    tCtx.fillText(e.mult + "x", x + 5, tCanvas.height - 15);
+                if (x > -20 && x < tCanvas.width + 20) {
+                    tCtx.strokeStyle = '#00ff00'; tCtx.lineWidth = 2;
+                    tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, tCanvas.height); tCtx.stroke();
+                    tCtx.fillStyle = '#00ff00'; tCtx.fillText(e.bpm + " BPM", x + 5, tCanvas.height - 30);
                 }
             });
 
-            const selStart = Math.min(selection.startBeat, selection.endBeat);
-            const selEnd = Math.max(selection.startBeat, selection.endBeat);
+            gameEvents.forEach(e => {
+                const x = cx + (e.beat - curBeat) * pxPerBeat;
+                if (x > -20 && x < tCanvas.width + 20) {
+                    const isSpeed = e.type === 'speed';
+                    tCtx.fillStyle = isSpeed ? '#ffd700' : '#00ffff';
+                    tCtx.beginPath(); tCtx.moveTo(x, tCanvas.height - 10); tCtx.lineTo(x - 5, tCanvas.height); tCtx.lineTo(x + 5, tCanvas.height); tCtx.fill();
+                    if (isSpeed) tCtx.fillText(e.value + "x", x + 6, tCanvas.height - 15);
+                }
+            });
 
+            const selS = Math.min(selection.startBeat, selection.endBeat), selE = Math.max(selection.startBeat, selection.endBeat);
             mapData.forEach(n => {
                 const x = cx + (n.beat - curBeat) * pxPerBeat;
                 if (x > -10 && x < tCanvas.width + 10) {
-                    const h = tCanvas.height / CONFIG.gridDim;
-                    const y = n.row * h;
-                    tCtx.fillStyle = CONFIG.colors[n.type];
-                    tCtx.fillRect(x - 4, y + 2, 8, h - 4);
-
-                    if (selection.active && n.beat >= selStart - 0.01 && n.beat <= selEnd + 0.01) {
-                        tCtx.strokeStyle = 'white';
-                        tCtx.lineWidth = 2;
-                        tCtx.strokeRect(x - 5, y + 1, 10, h - 2);
+                    const h = tCanvas.height / CONFIG.gridDim; const y = n.row * h;
+                    tCtx.fillStyle = CONFIG.colors[n.type]; tCtx.fillRect(x - 4, y + 2, 8, h - 4);
+                    if (selection.active && n.beat >= selS - 0.01 && n.beat <= selE + 0.01) {
+                        tCtx.strokeStyle = 'white'; tCtx.lineWidth = 2; tCtx.strokeRect(x - 5, y + 1, 10, h - 2);
                     }
                 }
             });
-
-            tCtx.strokeStyle = '#fff';
-            tCtx.lineWidth = 2;
-            tCtx.beginPath(); tCtx.moveTo(cx, 0); tCtx.lineTo(cx, tCanvas.height); tCtx.stroke();
+            tCtx.strokeStyle = '#fff'; tCtx.lineWidth = 2; tCtx.beginPath(); tCtx.moveTo(cx, 0); tCtx.lineTo(cx, tCanvas.height); tCtx.stroke();
         }
 
-        /**
-         * 3D RENDERER
-         */
-        function project(x, y, z, camX, camY) {
-            if (z < 1) z = 1;
-            const scale = CONFIG.fov / (z + CONFIG.fov);
-            const screenX = ((x - camX) * scale) + (canvas.width / 2);
-            const screenY = ((y - camY) * scale) + (canvas.height / 2);
-            return { x: screenX, y: screenY, scale: scale };
+        function project(x, y, z, cx, cy) {
+            if (z < 1) z = 1; const scale = CONFIG.fov / (z + CONFIG.fov);
+            return { x: ((x - cx) * scale) + canvas.width / 2, y: ((y - cy) * scale) + canvas.height / 2, scale: scale };
         }
 
+        let particles = [];
         function renderGame() {
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            let effectiveTime = STATE.currentTime - (STATE.offset / 1000);
-            
-            // --- UPDATED: Human-like Autoplay Logic ---
-            if (STATE.mode === 'GAME' && STATE.isAutoplay) {
-                const curBeat = effectiveTime * (STATE.bpm / 60);
-                const targets = mapData.filter(n => !n.hit && !n.missed && n.type < 2 && n.beat >= curBeat - 0.1)
-                                    .sort((a,b) => a.beat - b.beat);
-                
-                let targetX = canvas.width / 2;
-                let targetY = canvas.height / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let effectiveTime = getEffectiveTime();
+            let curBeat = timeToBeat(effectiveTime);
 
+            updateVisualsForTime(effectiveTime);
+
+            if (STATE.mode === 'GAME' && STATE.isAutoplay) {
+                const targets = mapData.filter(n => !n.hit && !n.missed && n.type < 2 && n.beat >= curBeat - 0.1).sort((a, b) => a.beat - b.beat);
+                let tx = canvas.width / 2, ty = canvas.height / 2;
                 if (targets.length > 0) {
                     const n = targets[0];
-                    const offset = Math.floor(CONFIG.gridDim / 2);
-                    const wx = (n.col - offset) * CONFIG.gridSpacing;
-                    const wy = -(n.row - offset) * CONFIG.gridSpacing;
-                    
+                    const wx = (n.col - 1) * CONFIG.gridSpacing, wy = -(n.row - 1) * CONFIG.gridSpacing;
                     const p = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
                     const size = CONFIG.gridSpacing * p.scale;
-
-                    // If target changed, pick a new random spot *within* the note hit area
                     if (autoplayTarget.note !== n) {
                         autoplayTarget.note = n;
-                        // 0.6 factor ensures we stay well within the note bounds (human accuracy)
-                        // but not perfectly in center (human imperfection)
-                        const safeRadius = (size / 2) * 0.6; 
-                        autoplayTarget.offX = (Math.random() - 0.5) * 2 * safeRadius;
-                        autoplayTarget.offY = (Math.random() - 0.5) * 2 * safeRadius;
+                        autoplayTarget.offX = (Math.random() - 0.5) * size * 0.6; autoplayTarget.offY = (Math.random() - 0.5) * size * 0.6;
                     }
-
-                    targetX = p.x + autoplayTarget.offX;
-                    targetY = p.y + autoplayTarget.offY;
-                } else {
-                    autoplayTarget.note = null;
+                    tx = p.x + autoplayTarget.offX; ty = p.y + autoplayTarget.offY;
                 }
-
-                // Add "Hand Tremor" / Noise
                 const time = performance.now() / 1000;
-                // Combine low freq sway and high freq jitter
-                const noiseX = (Math.sin(time * 3) * 10) + (Math.cos(time * 17) * 3);
-                const noiseY = (Math.cos(time * 4) * 10) + (Math.sin(time * 19) * 3);
-
-                targetX += noiseX;
-                targetY += noiseY;
-
-                // Calculate distance to target
-                const dx = targetX - mouse.realX;
-                const dy = targetY - mouse.realY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                // Dynamic Speed: Move fast when snapping to new note, settle slowly when close
-                let factor = 0.1 + (dist / 1000) * 0.5; 
-                if(factor > 0.5) factor = 0.5;
-                if(factor < 0.15) factor = 0.15;
-
-                mouse.realX += (targetX - mouse.realX) * factor;
-                mouse.realY += (targetY - mouse.realY) * factor;
-                
-                mouse.x = (mouse.realX - canvas.width/2) / (canvas.width/2);
-                mouse.y = (mouse.realY - canvas.height/2) / (canvas.height/2);
+                tx += (Math.sin(time * 3) * 10) + (Math.cos(time * 17) * 3);
+                ty += (Math.cos(time * 4) * 10) + (Math.sin(time * 19) * 3);
+                mouse.realX += (tx - mouse.realX) * 0.3; mouse.realY += (ty - mouse.realY) * 0.3;
+                mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2); mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
             }
-            // -------------------------------------------
 
-            const parallaxStrength = 150;
-            targetCamera.x = mouse.x * parallaxStrength;
-            targetCamera.y = mouse.y * parallaxStrength;
-
-            camera.x += (targetCamera.x - camera.x) * 0.1;
-            camera.y += (targetCamera.y - camera.y) * 0.1;
+            targetCamera.x = mouse.x * 150; targetCamera.y = mouse.y * 150;
+            camera.x += (targetCamera.x - camera.x) * 0.1; camera.y += (targetCamera.y - camera.y) * 0.1;
 
             drawTunnel(camera.x, camera.y);
 
-            const curBeat = effectiveTime * (STATE.bpm / 60);
-
-            const visibleNotes = mapData.filter(n => {
-                return (n.beat > curBeat - 4 && n.beat < curBeat + 32); 
-            }).sort((a, b) => b.beat - a.beat);
-
-            visibleNotes.forEach(n => {
+            const visible = mapData.filter(n => n.beat > curBeat - 4 && n.beat < curBeat + 32).sort((a, b) => b.beat - a.beat);
+            visible.forEach(n => {
                 const dist = getVisualDistance(curBeat, n.beat);
-                
                 if (dist < -200 || dist > CONFIG.approachDistance) return;
 
                 const z = CONFIG.hitZ + dist;
-                const color = CONFIG.colors[n.type];
-
-                const offset = Math.floor(CONFIG.gridDim / 2);
-                const wx = (n.col - offset) * CONFIG.gridSpacing;
-                const wy = -(n.row - offset) * CONFIG.gridSpacing;
-
+                const wx = (n.col - 1) * CONFIG.gridSpacing, wy = -(n.row - 1) * CONFIG.gridSpacing;
                 const p = project(wx, wy, z, camera.x, camera.y);
                 const size = CONFIG.gridSpacing * p.scale;
+                const color = CONFIG.colors[n.type];
 
-                // GAME LOGIC
                 if (STATE.mode === 'GAME' && !n.hit && !n.missed) {
-                    const timeDiff = n.beat - curBeat; 
-                    
-                    // --- AUTOPLAY LOGIC ---
-                    if (STATE.isAutoplay && n.type < 2) {
-                        // Automatically hit when it passes the hit threshold
-                        if (n.beat <= curBeat) {
-                            n.hit = true;
-                            STATE.combo++;
-                            STATE.score += 100 + (STATE.combo * 10);
-                            spawnParticles(wx, wy, z, color);
-                            playHitSound();
-                            updateScore();
-                        }
-                    }
-                    // --- NORMAL PLAY LOGIC ---
-                    else if (n.type < 2) { 
-                        if (Math.abs(timeDiff) < 0.15) {
-                            const dx = Math.abs(mouse.realX - p.x);
-                            const dy = Math.abs(mouse.realY - p.y);
-                            if (dx < size / 2 && dy < size / 2) {
-                                n.hit = true;
-                                STATE.combo++;
-                                STATE.score += 100 + (STATE.combo * 10);
-                                spawnParticles(wx, wy, z, color);
-                                playHitSound();
-                                updateScore();
-                            }
-                        } else if (timeDiff < -0.15) {
-                            n.missed = true;
-                            STATE.combo = 0;
-                            updateScore();
-                        }
-                    }
-                    // --- WALL LOGIC ---
-                    else if (n.type === 2) {
-                        // Check collision only if NOT autoplaying
-                        // (Autoplay makes walls harmless)
-                        if (!STATE.isAutoplay) {
-                            if (Math.abs(timeDiff) < 0.1) {
-                                const dx = Math.abs(mouse.realX - p.x);
-                                const dy = Math.abs(mouse.realY - p.y);
-                                if (dx < size / 2 && dy < size / 2) {
-                                    n.hit = true; 
-                                    STATE.combo = 0;
-                                    updateScore();
-                                    playFailSound();
-                                    const flash = document.getElementById('flash-overlay');
-                                    flash.style.opacity = 0.15;
-                                    setTimeout(() => flash.style.opacity = 0, 100);
-                                }
-                            }
-                        } 
-                        
-                        // Pass wall
-                        if (timeDiff < -0.1) {
-                            n.missed = true;
-                        }
+                    const diff = n.beat - curBeat;
+                    if (STATE.isAutoplay && n.type < 2 && diff <= 0) {
+                        n.hit = true; doHit(wx, wy, z, color);
+                    } else if (n.type < 2) {
+                        if (Math.abs(diff) < 0.15) {
+                            if (Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) { n.hit = true; doHit(wx, wy, z, color); }
+                        } else if (diff < -0.15) { n.missed = true; }
+                    } else if (n.type === 2) {
+                        if (!STATE.isAutoplay && Math.abs(diff) < 0.1 && Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
+                            n.hit = true; playFailSound();
+                            document.getElementById('flash-overlay').style.opacity = 0.15; setTimeout(() => document.getElementById('flash-overlay').style.opacity = 0, 100);
+                        } else if (diff < -0.1) n.missed = true;
                     }
                 }
 
-                // DRAWING
                 if (!n.hit) {
                     if (n.type < 2 && n.beat > curBeat && n.beat < curBeat + 4) {
-                         const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
-                         const approachScale = 1 + ((n.beat - curBeat) * 2.5);
-                         const outSize = CONFIG.gridSpacing * dest.scale * approachScale;
-                         
-                         ctx.strokeStyle = color;
-                         ctx.lineWidth = 2;
-                         ctx.globalAlpha = Math.max(0, 1 - (n.beat - curBeat)/4);
-                         ctx.strokeRect(dest.x - outSize/2, dest.y - outSize/2, outSize, outSize);
-                         ctx.globalAlpha = 1;
+                        const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
+                        const aScale = 1 + ((n.beat - curBeat) * 2.5);
+                        const os = CONFIG.gridSpacing * dest.scale * aScale;
+                        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, 1 - (n.beat - curBeat) / 4);
+                        ctx.strokeRect(dest.x - os / 2, dest.y - os / 2, os, os); ctx.globalAlpha = 1;
                     }
 
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    const baseAlpha = Math.min(1, z / 300 + 0.3);
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = color;
-
-                    if(n.type === 2) {
-                        ctx.globalAlpha = baseAlpha * 0.8;
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = Math.max(2, size * 0.05);
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(-size/2, -size/2); ctx.lineTo(size/2, size/2);
-                        ctx.moveTo(size/2, -size/2); ctx.lineTo(-size/2, size/2);
-                        ctx.stroke();
-                        
+                    ctx.save(); ctx.translate(p.x, p.y);
+                    const alpha = Math.min(1, z / 300 + 0.3);
+                    ctx.shadowBlur = 15; ctx.shadowColor = color;
+                    if (n.type === 2) {
+                        ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size * 0.05);
                         ctx.strokeRect(-size / 2, -size / 2, size, size);
-                        
-                        ctx.fillStyle = color;
-                        ctx.globalAlpha = baseAlpha * 0.2;
-                        ctx.fillRect(-size / 2, -size / 2, size, size);
-                    } 
-                    else {
-                        ctx.globalAlpha = baseAlpha;
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = Math.max(3, size * 0.12);
+                        ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(size / 2, size / 2); ctx.moveTo(size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.stroke();
+                        ctx.fillStyle = color; ctx.globalAlpha = alpha * 0.2; ctx.fillRect(-size / 2, -size / 2, size, size);
+                    } else {
+                        ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, size * 0.12);
                         ctx.strokeRect(-size / 2, -size / 2, size, size);
-
-                        ctx.globalAlpha = baseAlpha * 0.15;
-                        ctx.fillStyle = color;
-                        ctx.fillRect(-size / 2, -size / 2, size, size);
+                        ctx.globalAlpha = alpha * 0.15; ctx.fillStyle = color; ctx.fillRect(-size / 2, -size / 2, size, size);
                     }
                     ctx.restore();
                 }
             });
 
             const hp = project(0, 0, CONFIG.hitZ, camera.x, camera.y);
-            const totalGridSize = (CONFIG.gridDim * CONFIG.gridSpacing);
-            const hpSize = totalGridSize * hp.scale;
+            const hpSize = (CONFIG.gridDim * CONFIG.gridSpacing) * hp.scale;
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2; ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
 
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.z += p.vz; p.life -= 0.04;
+                if (p.life <= 0) { particles.splice(i, 1); continue; }
+                const pr = project(p.x, p.y, p.z, camera.x, camera.y);
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.fillRect(pr.x, pr.y, 6 * pr.scale, 6 * pr.scale);
+            } ctx.globalAlpha = 1;
 
-            renderParticles(camera.x, camera.y);
-
-            if (STATE.mode === 'GAME') drawCursor();
+            if (STATE.mode === 'GAME') {
+                ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(mouse.realX, mouse.realY, 12, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+            }
         }
 
         function drawTunnel(cx, cy) {
             const dim = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
-            const corners = [
-                { x: -dim, y: -dim }, { x: dim, y: -dim },
-                { x: -dim, y: dim }, { x: dim, y: dim }
-            ];
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            corners.forEach(c => {
-                const p1 = project(c.x, c.y, 0, cx, cy);
-                const p2 = project(c.x, c.y, 2000, cx, cy);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-            });
-            ctx.stroke();
+            const pts = [[-dim, -dim], [dim, -dim], [-dim, dim], [dim, dim]];
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.beginPath();
+            pts.forEach(p => {
+                const p1 = project(p[0], p[1], 0, cx, cy); const p2 = project(p[0], p[1], 2000, cx, cy);
+                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            }); ctx.stroke();
         }
 
-        let particles = [];
-        function spawnParticles(x, y, z, c) {
-            for (let i = 0; i < 12; i++) {
-                particles.push({
-                    x, y, z, c,
-                    vx: (Math.random() - 0.5) * 20,
-                    vy: (Math.random() - 0.5) * 20,
-                    vz: (Math.random() - 0.5) * 20,
-                    life: 1
-                });
-            }
+        function doHit(x, y, z, c) {
+            playHitSound();
+            for (let i = 0; i < 12; i++) particles.push({ x, y, z, c, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, vz: (Math.random() - 0.5) * 20, life: 1 });
         }
-        function renderParticles(cx, cy) {
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.z += p.vz;
-                p.life -= 0.04;
-                if (p.life <= 0) { particles.splice(i, 1); continue; }
-
-                const proj = project(p.x, p.y, p.z, cx, cy);
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.c;
-                ctx.fillRect(proj.x, proj.y, 6 * proj.scale, 6 * proj.scale);
-            }
-            ctx.globalAlpha = 1;
-        }
-
-        function drawCursor() {
-            ctx.shadowBlur = 10; ctx.shadowColor = 'white';
-            ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(mouse.realX, mouse.realY, 12, 0, Math.PI * 2); ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-
-        function updateScore() {
-            document.getElementById('score').innerText = "Score: " + STATE.score;
-            document.getElementById('combo').innerText = STATE.combo;
-        }
-
+        
         function togglePlay() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (STATE.isPlaying) { audio.pause(); STATE.isPlaying = false; }
-            else {
-                audio.play();
-                STATE.isPlaying = true;
-            }
+            if (!ytReady) return;
+            if (STATE.isPlaying) { ytPlayer.pauseVideo(); STATE.isPlaying = false; }
+            else { ytPlayer.playVideo(); STATE.isPlaying = true; }
         }
 
         function toggleMode() {
             if (STATE.mode === 'EDITOR') {
                 STATE.mode = 'GAME';
-                document.getElementById('editor-ui').style.display = 'none';
-                document.getElementById('game-ui').style.display = 'flex';
-
-                STATE.score = 0; STATE.combo = 0; updateScore();
+                document.getElementById('editor-ui').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex';
                 mapData.forEach(n => { n.hit = false; n.missed = false; });
-                
-                // Initialize mouse.realX/Y center to avoid jump
-                mouse.realX = canvas.width / 2;
-                mouse.realY = canvas.height / 2;
-
-                // --- ADDED: Request Pointer Lock ---
+                mouse.realX = canvas.width / 2; mouse.realY = canvas.height / 2;
                 canvas.requestPointerLock();
-
-                // START FROM PLAYHEAD LOGIC
-                // If we are at the very beginning (or very close), do the countdown
-                if (audio.currentTime <= 0.1) {
-                    STATE.currentTime = -CONFIG.startBuffer;
-                    audio.currentTime = 0;
-                    audio.pause();
-                } else {
-                    // Start immediately from current editor position
-                    STATE.currentTime = audio.currentTime;
-                    audio.play();
-                }
-
-                STATE.isPlaying = true;
-                canvas.style.cursor = 'none';
+                if (STATE.currentTime <= 0.1) { STATE.currentTime = -CONFIG.startBuffer; if (ytReady) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); } }
+                else if (ytReady) ytPlayer.playVideo();
+                STATE.isPlaying = true; canvas.style.cursor = 'none';
             } else {
                 STATE.mode = 'EDITOR';
-                document.getElementById('editor-ui').style.display = 'flex';
-                document.getElementById('game-ui').style.display = 'none';
+                document.getElementById('editor-ui').style.display = 'flex'; document.getElementById('game-ui').style.display = 'none';
                 document.getElementById('countdown-overlay').style.display = 'none';
-
-                // --- ADDED: Exit Pointer Lock ---
                 document.exitPointerLock();
-
-                audio.pause();
-                STATE.isPlaying = false;
-                STATE.currentTime = audio.currentTime;
-                updateMultInput();
-
-                canvas.style.cursor = 'default';
-                camera.x = 0; camera.y = 0;
+                if (ytReady) { ytPlayer.pauseVideo(); STATE.currentTime = ytPlayer.getCurrentTime(); }
+                STATE.isPlaying = false; updateEventEditorUI();
+                canvas.style.cursor = 'default'; camera.x = 0; camera.y = 0;
             }
         }
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const tc = document.getElementById('timeline-container');
-            tCanvas.width = tc.offsetWidth;
-            tCanvas.height = tc.offsetHeight;
+        function loadMapFile(e) {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                try {
+                    const d = JSON.parse(ev.target.result);
+                    // Legacy support
+                    if (d.bpm && typeof d.bpm === 'number') {
+                        bpmEvents = [{ beat: 0, bpm: d.bpm, time: 0 }];
+                    } else if (d.bpm && Array.isArray(d.bpm)) {
+                        bpmEvents = d.bpm;
+                    } else {
+                        bpmEvents = [{ beat: 0, bpm: 128, time: 0 }];
+                    }
+                    updateBPMCache();
+
+                    STATE.offset = d.offset || 0; mapData = d.notes;
+                    if (d.speedEvents && !d.events) {
+                        gameEvents = d.speedEvents.map(s => ({ beat: s.beat, type: 'speed', value: (s.mult || s.val / 800) }));
+                        gameEvents.push({ beat: 0, type: 'bg-dim', value: 0.5 }, { beat: 0, type: 'playfield-op', value: 1 },
+                            { beat: 0, type: 'bloom-blur', value: 0 }, { beat: 0, type: 'bloom-bright', value: 1 });
+                    } else if (d.events) { gameEvents = d.events; }
+                    if (d.youtubeId && ytReady) { ytPlayer.loadVideoById(d.youtubeId); ytPlayer.pauseVideo(); document.getElementById('ytUrlInput').value = d.youtubeId; }
+                    
+                    document.getElementById('offsetInput').value = STATE.offset;
+                    updateBPMUI();
+                    historyStack.length = 0; pushState();
+                } catch (err) { console.error(err); alert("Load error"); }
+            }; r.readAsText(f);
         }
 
         function exportMap() {
-            const d = { 
-                bpm: STATE.bpm, 
-                offset: STATE.offset, 
-                notes: mapData,
-                speedEvents: speedEvents
-            };
+            let ytid = document.getElementById('ytUrlInput').value;
+            let match = ytid.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+            if (match && match[2].length === 11) ytid = match[2];
+            const d = { bpm: bpmEvents, offset: STATE.offset, youtubeId: ytid, notes: mapData, events: gameEvents };
             const blob = new Blob([JSON.stringify(d)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'rhythm-chart.json';
-            a.click();
+            let filename = 'chart.json';
+            if(ytReady && ytPlayer && ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
+                filename = ytPlayer.getVideoData().title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
+            }
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
         }
 
+        function resize() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            tCanvas.width = document.getElementById('timeline-container').offsetWidth;
+            tCanvas.height = document.getElementById('timeline-container').offsetHeight;
+        }
+
+        let lastTime = performance.now();
         function loop() {
-            const now = performance.now();
-            const dt = (now - lastTime) / 1000;
-            lastTime = now;
+            const now = performance.now(); const dt = (now - lastTime) / 1000; lastTime = now;
 
             if (STATE.mode === 'EDITOR') {
-                if (STATE.isPlaying) {
-                    STATE.currentTime = audio.currentTime;
-                    updateMultInput();
-                }
-                updateGridHighlight();
-                drawTimeline();
-            }
-            else if (STATE.mode === 'GAME') {
-                if (STATE.isPlaying) {
-                    // Only do countdown logic if we are in negative time
-                    if (STATE.currentTime < 0) {
-                        STATE.currentTime += dt;
+                if (STATE.isPlaying && ytReady) { 
+                    const prevEffectiveTime = STATE.currentTime - (STATE.offset / 1000);
+                    const prevBeat = timeToBeat(prevEffectiveTime);
+                    
+                    STATE.currentTime = ytPlayer.getCurrentTime(); 
+                    
+                    const curEffectiveTime = STATE.currentTime - (STATE.offset / 1000);
+                    const curBeat = timeToBeat(curEffectiveTime);
 
-                        const cd = document.getElementById('countdown-overlay');
-                        cd.style.display = 'block';
-                        if (STATE.currentTime < -2) cd.innerText = "3";
-                        else if (STATE.currentTime < -1) cd.innerText = "2";
-                        else if (STATE.currentTime < 0) cd.innerText = "1";
-
-                        if (STATE.currentTime >= 0) {
-                            STATE.currentTime = 0;
-                            audio.currentTime = 0;
-                            audio.play();
-                            cd.innerText = "GO";
-                            setTimeout(() => cd.style.display = 'none', 500);
-                        }
+                    if (curBeat > prevBeat && (curBeat - prevBeat) < 4.0) {
+                        mapData.forEach(n => {
+                            if (n.beat > prevBeat && n.beat <= curBeat && n.type !== 2) {
+                                playHitSound();
+                            }
+                        });
                     }
-                    else {
-                        STATE.currentTime = audio.currentTime;
-                    }
+                    updateEventEditorUI(); 
+                    updateBPMUI();
                 }
+                updateGridHighlight(); drawTimeline();
+            } else if (STATE.mode === 'GAME' && STATE.isPlaying) {
+                if (STATE.currentTime < 0) {
+                    STATE.currentTime += dt;
+                    const cd = document.getElementById('countdown-overlay'); cd.style.display = 'block';
+                    cd.innerText = Math.abs(STATE.currentTime).toFixed(0);
+                    if (STATE.currentTime >= 0) { STATE.currentTime = 0; if (ytReady) { ytPlayer.seekTo(0); ytPlayer.playVideo(); } cd.style.display = 'none'; }
+                } else if (ytReady) STATE.currentTime = ytPlayer.getCurrentTime();
             }
-
-            renderGame();
-            requestAnimationFrame(loop);
+            renderGame(); requestAnimationFrame(loop);
         }
 
         init();
