@@ -235,7 +235,7 @@
             <h1>Paused</h1>
             <div id="pause-stats" style="margin-bottom:20px; font-size:20px;"></div>
             <button class="btn btn-primary" onclick="resumeGame()">Resume</button>
-            <button class="btn" onclick="location.reload()">Quit</button>
+            <button class="btn" onclick="location.href = '../'">Quit</button>
         </div>
 
         <div id="menu-results" class="menu-box">
@@ -352,9 +352,7 @@
                     const data = JSON.parse(storedChart);
                     loadMapData(data);
                     statusDiv.style.display = 'none';
-                    document.getElementById('ready-options').style.display = 'block';
-                    document.getElementById('menu-main').style.display = 'block';
-                    document.getElementById('song-info').innerText = "Map Loaded via LocalStorage";
+                    startGame()
                 } catch (e) {
                     console.error("LS Load Failed", e);
                     promptManualLoad();
@@ -394,7 +392,7 @@
             }
             updateBPMCache();
 
-            STATE.offset = (data.offset || 0) + 25; 
+            STATE.offset = (data.offset || 0) + 75; 
             mapData = data.notes.map(n => ({ ...n, hit: false, missed: false }));
 
             STATE.lastNoteBeat = 0;
@@ -420,7 +418,17 @@
                 ytPlayer.loadVideoById(data.youtubeId);
                 ytPlayer.pauseVideo();
             }
-        }
+            // ADD THIS BLOCK TO READ SETTINGS FROM SELECT SCREEN
+                if (data.settings) {
+                    if (data.settings.colors) CONFIG.colors = data.settings.colors;
+                        if (data.settings.approachDistance) CONFIG.approachDistance = data.settings.approachDistance;
+                            if (data.settings.speedMultiplier) {
+                                // Apply multiplier to baseSpeed
+                                STATE.baseSpeed = 2500 * data.settings.speedMultiplier;
+                            }
+                }
+            }
+    
 
         function startGame() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -477,13 +485,20 @@
         function finishGame() {
             STATE.status = 'FINISHED';
             document.exitPointerLock();
-            document.getElementById('menu-results').style.display = 'block';
-            document.getElementById('final-score').innerText = Math.floor(STATE.score).toLocaleString();
-            document.getElementById('final-stats').innerHTML = `
-                Max Combo: ${STATE.maxCombo}<br>
-                Hits: ${STATE.hits}<br>
-                Misses: ${STATE.misses}
-            `;
+
+            // 1. Gather Results
+            const results = {
+                score: Math.floor(STATE.score),
+                combo: STATE.maxCombo,
+                hits: STATE.hits,
+                misses: STATE.misses
+            };
+
+            // 2. Save to LocalStorage
+            localStorage.setItem('gameResults', JSON.stringify(results));
+
+            // 3. Redirect to Results Screen
+            window.location.href = '../';
         }
 
 

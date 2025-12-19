@@ -185,6 +185,7 @@
         ];
         
         let bpmEvents = [{ beat: 0, bpm: 128, time: 0 }]; 
+        let pendingVideoId = null; 
 
         function updateBPMCache() {
             bpmEvents.sort((a, b) => a.beat - b.beat);
@@ -301,6 +302,73 @@
             updateBPMUI();
         }
 
+        function loadChartData(d) {
+            // --- 1. BPM Logic ---
+            if (d.bpm && typeof d.bpm === 'number') {
+                bpmEvents = [{ beat: 0, bpm: d.bpm, time: 0 }];
+            } else if (d.bpm && Array.isArray(d.bpm)) {
+                bpmEvents = d.bpm;
+            } else {
+                bpmEvents = [{ beat: 0, bpm: 128, time: 0 }];
+            }
+            updateBPMCache();
+
+            // --- 2. Basic Stats ---
+            STATE.offset = d.offset || 0; 
+            mapData = d.notes || [];
+
+            // --- 3. Events ---
+            if (d.speedEvents && !d.events) {
+                // Convert legacy speed events
+                gameEvents = d.speedEvents.map(s => ({ beat: s.beat, type: 'speed', value: (s.mult || s.val / 800) }));
+                gameEvents.push(
+                    { beat: 0, type: 'bg-dim', value: 0.5 },
+                    { beat: 0, type: 'playfield-op', value: 1 },
+                    { beat: 0, type: 'bloom-blur', value: 0 },
+                    { beat: 0, type: 'bloom-bright', value: 1 }
+                );
+            } else if (d.events) { 
+                gameEvents = d.events; 
+            } else {
+                // Defaults
+                gameEvents = [
+                    { beat: 0, type: 'speed', value: 1.0 },
+                    { beat: 0, type: 'bg-dim', value: 0.5 },
+                    { beat: 0, type: 'playfield-op', value: 1.0 },
+                    { beat: 0, type: 'bloom-blur', value: 0 },
+                    { beat: 0, type: 'bloom-bright', value: 1.0 }
+                ];
+            }
+
+            // --- 4. Settings (Speed Mult) ---
+            if(d.settings && d.settings.speedMultiplier) {
+                 // Restore Editor Base Speed (Player Speed * 2500)
+                 STATE.baseSpeed = d.settings.speedMultiplier * 2500;
+                 document.getElementById('baseSpeedInput').value = STATE.baseSpeed;
+            }
+
+            // --- 5. YouTube ---
+            if (d.youtubeId) { 
+                document.getElementById('ytUrlInput').value = d.youtubeId;
+                if (ytReady) { 
+                    ytPlayer.loadVideoById(d.youtubeId); 
+                    ytPlayer.pauseVideo(); 
+                } else {
+                    pendingVideoId = d.youtubeId;
+                }
+            }
+
+            // --- 6. UI Refresh ---
+            document.getElementById('offsetInput').value = STATE.offset;
+            updateBPMUI();
+            updateEventEditorUI();
+            updateGridHighlight();
+            
+            // Reset History
+            historyStack.length = 0; 
+            pushState();
+        }
+
         let selection = { active: false, startBeat: 0, endBeat: 0 };
         let clipboard = null;
         let autoplayTarget = { note: null, offX: 0, offY: 0 };
@@ -318,7 +386,15 @@
                 events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
             });
         }
-        function onPlayerReady() { ytReady = true; STATE.duration = ytPlayer.getDuration(); }
+        function onPlayerReady() { 
+            ytReady = true; 
+            if(pendingVideoId) {
+                ytPlayer.loadVideoById(pendingVideoId);
+                ytPlayer.pauseVideo();
+                pendingVideoId = null;
+            }
+            if(ytPlayer.getDuration) STATE.duration = ytPlayer.getDuration();
+        }
         function onPlayerStateChange(e) {
             if (e.data === YT.PlayerState.ENDED) { STATE.isPlaying = false; if (STATE.mode === 'GAME') toggleMode(); }
         }
@@ -361,8 +437,8 @@
             resize(); window.addEventListener('resize', resize);
             createGridUI();
             updateBPMCache();
-            pushState();
-
+            
+            // Listeners
             document.getElementById('snapSelect').addEventListener('change', (e) => STATE.snap = parseFloat(e.target.value));
             document.getElementById('offsetInput').addEventListener('change', (e) => {
                 STATE.offset = parseFloat(e.target.value) || 0;
@@ -399,9 +475,25 @@
 
             setupMouseInput();
             updateEventEditorUI();
+
+            // --- AUTO LOAD LOGIC ---
+            const saved = localStorage.getItem('selectedChart');
+            if(saved) {
+                try {
+                    console.log("Found saved chart in localStorage, loading...");
+                    const d = JSON.parse(saved);
+                    loadChartData(d);
+                } catch(e) {
+                    console.warn("Failed to autoload from localStorage", e);
+                    pushState(); // Fallback: Init empty state
+                }
+            } else {
+                pushState(); // Init empty state
+            }
+
             requestAnimationFrame(loop);
         }
-
+        
         function setupMouseInput() {
             window.addEventListener('mousemove', e => {
                 if (STATE.mode === 'GAME' && STATE.isAutoplay) return;
@@ -879,25 +971,53 @@
             else { ytPlayer.playVideo(); STATE.isPlaying = true; }
         }
 
+        function getChartDataObject() {
+            let ytid = document.getElementById('ytUrlInput').value;
+            let match = ytid.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+            if (match && match[2].length === 11) ytid = match[2];
+
+            // Calculate speed multiplier based on Editor's Base Speed vs Standard Player Speed (2500)
+            const speedMult = STATE.baseSpeed / 2500;
+
+            return {
+                bpm: bpmEvents,
+                offset: STATE.offset,
+                youtubeId: ytid,
+                notes: mapData,
+                events: gameEvents,
+                // Pass settings so the player feels like the editor
+                settings: {
+                    speedMultiplier: speedMult, 
+                    approachDistance: CONFIG.approachDistance,
+                    colors: CONFIG.colors
+                }
+            };
+        }
+
         function toggleMode() {
-            if (STATE.mode === 'EDITOR') {
-                STATE.mode = 'GAME';
-                document.getElementById('editor-ui').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex';
-                mapData.forEach(n => { n.hit = false; n.missed = false; });
-                mouse.realX = canvas.width / 2; mouse.realY = canvas.height / 2;
-                canvas.requestPointerLock();
-                if (STATE.currentTime <= 0.1) { STATE.currentTime = -CONFIG.startBuffer; if (ytReady) { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); } }
-                else if (ytReady) ytPlayer.playVideo();
-                STATE.isPlaying = true; canvas.style.cursor = 'none';
-            } else {
-                STATE.mode = 'EDITOR';
-                document.getElementById('editor-ui').style.display = 'flex'; document.getElementById('game-ui').style.display = 'none';
-                document.getElementById('countdown-overlay').style.display = 'none';
-                document.exitPointerLock();
-                if (ytReady) { ytPlayer.pauseVideo(); STATE.currentTime = ytPlayer.getCurrentTime(); }
-                STATE.isPlaying = false; updateEventEditorUI();
-                canvas.style.cursor = 'default'; camera.x = 0; camera.y = 0;
+            // 1. Get current chart data
+            const data = getChartDataObject();
+
+            // 2. Save to LocalStorage (same key used by the Select Screen)
+            localStorage.setItem('selectedChart', JSON.stringify(data));
+
+            // 3. Redirect to the player
+            window.location.href = '../editor/test';
+        }
+
+        function exportMap() {
+            const d = getChartDataObject();
+            const blob = new Blob([JSON.stringify(d)], { type: 'application/json' });
+            
+            let filename = 'chart.json';
+            if(ytReady && ytPlayer && ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
+                filename = ytPlayer.getVideoData().title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
             }
+            
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = filename; 
+            a.click();
         }
 
         function loadMapFile(e) {
@@ -929,19 +1049,6 @@
                     historyStack.length = 0; pushState();
                 } catch (err) { console.error(err); alert("Load error"); }
             }; r.readAsText(f);
-        }
-
-        function exportMap() {
-            let ytid = document.getElementById('ytUrlInput').value;
-            let match = ytid.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
-            if (match && match[2].length === 11) ytid = match[2];
-            const d = { bpm: bpmEvents, offset: STATE.offset, youtubeId: ytid, notes: mapData, events: gameEvents };
-            const blob = new Blob([JSON.stringify(d)], { type: 'application/json' });
-            let filename = 'chart.json';
-            if(ytReady && ytPlayer && ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
-                filename = ytPlayer.getVideoData().title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
-            }
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
         }
 
         function resize() {
