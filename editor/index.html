@@ -841,7 +841,7 @@
 
         function project(x, y, z, cx, cy) {
             if (z < 1) z = 1; const scale = CONFIG.fov / (z + CONFIG.fov);
-            return { x: ((x - cx) * scale) + canvas.width / 2, y: ((y - cy) * scale) + canvas.height / 2, scale: scale };
+            return { x: ((x - cx) * scale) + canvas.width / 2, y: -((y - cy) * scale) + canvas.height / 2, scale: scale };
         }
 
         let particles = [];

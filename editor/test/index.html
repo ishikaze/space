@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>player client v7(16)</title>
+    <!-- Added viewport meta tag for mobile scaling and disable zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>player client v7(16) Mobile</title>
     <style>
         :root {
             --p: #ff96d3;
@@ -23,6 +25,9 @@
             font-family: 'Segoe UI', sans-serif;
             color: white;
             user-select: none;
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior: none;
+            touch-action: none;
         }
 
         #video-placeholder {
@@ -109,6 +114,32 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+        }
+
+        /* NEW PAUSE BUTTON STYLE */
+        #mobile-pause-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--s);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            display: none; /* Hidden by default, shown in JS during game */
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        #mobile-pause-btn:active {
+            background: var(--s);
+            color: black;
         }
 
         .menu-box {
@@ -209,6 +240,9 @@
     <div id="bloom-layer"></div>
     <div id="flash-overlay"></div>
 
+    <!-- NEW PAUSE BUTTON -->
+    <div id="mobile-pause-btn" onclick="pauseGame()">pause</div>
+
     <div id="ui-layer">
 
         <div id="countdown">3</div>
@@ -268,7 +302,7 @@
             fadeStartTime: 0,
 
             fever: 0,
-            feverMax: 100,
+            feverMax: 30,
             feverState: 0,
         };
 
@@ -285,6 +319,8 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const bgVideo = document.getElementById('video-placeholder');
+        const pauseBtn = document.getElementById('mobile-pause-btn'); // Ref to new button
+
         let mouse = { x: 0, y: 0, realX: 0, realY: 0 };
         let camera = { x: 0, y: 0, recoil: 0, shake: 0 };
         let targetCamera = { x: 0, y: 0 };
@@ -418,16 +454,15 @@
                 ytPlayer.loadVideoById(data.youtubeId);
                 ytPlayer.pauseVideo();
             }
-            // ADD THIS BLOCK TO READ SETTINGS FROM SELECT SCREEN
-                if (data.settings) {
-                    if (data.settings.colors) CONFIG.colors = data.settings.colors;
-                        if (data.settings.approachDistance) CONFIG.approachDistance = data.settings.approachDistance;
-                            if (data.settings.speedMultiplier) {
-                                // Apply multiplier to baseSpeed
-                                STATE.baseSpeed = 2500 * data.settings.speedMultiplier;
-                            }
+            
+            if (data.settings) {
+                if (data.settings.colors) CONFIG.colors = data.settings.colors;
+                if (data.settings.approachDistance) CONFIG.approachDistance = data.settings.approachDistance;
+                if (data.settings.speedMultiplier) {
+                    STATE.baseSpeed = 2500 * data.settings.speedMultiplier;
                 }
             }
+        }
     
 
         function startGame() {
@@ -443,7 +478,12 @@
             mapData.forEach(n => { n.hit = false; n.missed = false; });
 
             resize();
-            canvas.requestPointerLock();
+            
+            // Try pointer lock, but don't crash if it fails (Mobile)
+            try { canvas.requestPointerLock(); } catch(e){}
+            
+            pauseBtn.style.display = 'flex'; // Show mobile pause button
+
             mouse.realX = canvas.width / 2; mouse.realY = canvas.height / 2;
 
             STATE.currentTime = -CONFIG.startBuffer;
@@ -457,9 +497,10 @@
         function resumeGame() {
             if (STATE.status !== 'PAUSED') return;
             document.body.classList.remove('game-paused');
-            canvas.requestPointerLock();
+            try { canvas.requestPointerLock(); } catch(e){}
             STATE.status = 'PLAYING';
             document.getElementById('menu-pause').style.display = 'none';
+            pauseBtn.style.display = 'flex'; // Show mobile pause button
 
             if (STATE.currentTime >= 0 && ytReady) {
                 ytPlayer.seekTo(STATE.currentTime);
@@ -472,6 +513,8 @@
             STATE.status = 'PAUSED';
             document.exitPointerLock();
             if (ytReady) ytPlayer.pauseVideo();
+            
+            pauseBtn.style.display = 'none'; // Hide mobile pause button (menu covers it)
 
             document.body.classList.add('game-paused');
             document.getElementById('menu-pause').style.display = 'block';
@@ -485,6 +528,7 @@
         function finishGame() {
             STATE.status = 'FINISHED';
             document.exitPointerLock();
+            pauseBtn.style.display = 'none';
 
             // 1. Gather Results
             const results = {
@@ -520,9 +564,36 @@
 
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === null && STATE.status === 'PLAYING') {
-                pauseGame();
+                // On PC this pauses, on mobile we ignore this because lock isn't supported
+                // Check if user is on mobile by checking touch capability roughly
+                const isTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+                if(!isTouch) pauseGame();
             }
         });
+
+        // --- NEW MOBILE TOUCH HANDLERS ---
+        canvas.addEventListener('touchstart', handleTouch, {passive: false});
+        canvas.addEventListener('touchmove', handleTouch, {passive: false});
+
+        function handleTouch(e) {
+            e.preventDefault(); // Stop scrolling
+            if (STATE.status !== 'PLAYING') return;
+
+            const touch = e.touches[0];
+            
+            // Map touch position directly to game cursor (1:1 control)
+            mouse.realX = touch.clientX;
+            mouse.realY = touch.clientY;
+
+            // Ensure bounds
+            mouse.realX = Math.max(0, Math.min(canvas.width, mouse.realX));
+            mouse.realY = Math.max(0, Math.min(canvas.height, mouse.realY));
+
+            // Update projection coordinates
+            mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
+            mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
+        }
+        // ---------------------------------
 
         window.addEventListener('mousemove', e => {
             if (STATE.feverState === 2) return;
@@ -537,10 +608,13 @@
                 mouse.realX += e.movementX;
                 mouse.realY += e.movementY;
 
-                if (mouse.realX < minX) mouse.realX = minX;
-                if (mouse.realX > maxX) mouse.realX = maxX;
-                if (mouse.realY < minY) mouse.realY = minY;
-                if (mouse.realY > maxY) mouse.realY = maxY;
+                const cursorSize = 40; 
+                const pad = cursorSize / 2; 
+
+                if (mouse.realX < minX + pad) mouse.realX = minX + pad;
+                if (mouse.realX > maxX - pad) mouse.realX = maxX - pad;
+                if (mouse.realY < minY + pad) mouse.realY = minY + pad;
+                if (mouse.realY > maxY - pad) mouse.realY = maxY - pad;
 
                 mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
                 mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
@@ -589,7 +663,7 @@
 
             return {
                 x: ((x - cx) * scale) + canvas.width / 2 + viewShake.x,
-                y: ((y - cy) * scale) + canvas.height / 2 + viewShake.y,
+                y: -((y - cy) * scale) + canvas.height / 2 + viewShake.y,
                 scale: scale
             };
         }
@@ -662,19 +736,25 @@
             }
         }
 
-        function drawHUD() {
+function drawHUD() {
             const boxHalf = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
             const z = CONFIG.hitZ;
-
-            const pTopLeft = project(-boxHalf, -boxHalf, z, camera.x, camera.y);
+            const pTopLeft = project(-boxHalf, boxHalf, z, camera.x, camera.y);
+            
+            // Visual Bottom Center Edge (0, -y)
+            const pBotCenter = project(0, -boxHalf, z, camera.x, camera.y);
+            
             const scale = pTopLeft.scale;
 
+            // --- SCORE (Top Left) ---
             ctx.textAlign = 'left';
-            ctx.textBaseline = 'bottom';
+            ctx.textBaseline = 'bottom'; // Draw upwards from the anchor point
             ctx.font = `bold ${30 * scale}px "Segoe UI"`;
             ctx.shadowBlur = 10; ctx.shadowColor = 'var(--s)'; ctx.fillStyle = 'white';
+            // Draw slightly above the corner
             ctx.fillText(Math.floor(STATE.displayedScore).toLocaleString(), pTopLeft.x, pTopLeft.y - (10 * scale));
 
+            // --- COMBO (Right Side) ---
             const pRight = project(boxHalf, 0, z, camera.x, camera.y);
             const r = 50 * scale;
 
@@ -705,6 +785,7 @@
             ctx.fillText("COMBO", 0, 20 * scale);
             ctx.restore();
 
+            // --- 2X MULTIPLIER (Left Side) ---
             if (STATE.feverState === 1) {
                 const pLeft = project(-boxHalf, 0, z, camera.x, camera.y);
                 ctx.save();
@@ -716,35 +797,40 @@
                 ctx.restore();
             }
 
+            // --- AUTO/SPACE TEXT (Bottom Center) ---
+            
             if (STATE.feverState === 1) {
-                const pBot = project(0, boxHalf, z, camera.x, camera.y);
                 const alpha = Math.abs(Math.sin(Date.now() / 200));
                 ctx.save();
-                ctx.translate(pBot.x, pBot.y + (30 * scale));
+                // Move DOWN outwards from the bottom edge
+                ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale)); 
                 ctx.font = `bold ${20 * scale}px "Segoe UI"`;
                 ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
                 ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.textAlign = 'center'; 
+                ctx.textBaseline = 'top'; // Draw downwards from the anchor
                 ctx.fillText("[ SPACE TO AUTO ] ", 0, 0);
                 ctx.restore();
             }
 
             if (STATE.feverState === 2) {
-                const pBot = project(0, boxHalf, z, camera.x, camera.y);
                 ctx.save();
-                ctx.translate(pBot.x, pBot.y + (30 * scale));
+                // Move DOWN outwards
+                ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale));
 
                 ctx.font = `900 ${24 * scale}px "Segoe UI"`;
                 ctx.fillStyle = `#00ffcc`;
                 ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 20;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.textAlign = 'center'; 
+                ctx.textBaseline = 'top'; 
                 ctx.fillText("AUTO PILOT", 0, 0);
 
                 if (STATE.fever < 25) {
-                    const flash = (Math.sin(Date.now() / 100) + 1) / 2; // Fast flash 0 to 1
+                    const flash = (Math.sin(Date.now() / 100) + 1) / 2; 
                     ctx.font = `900 ${20 * scale}px "Segoe UI"`;
                     ctx.fillStyle = `rgba(255, 0, 0, ${flash})`;
                     ctx.shadowColor = 'red'; ctx.shadowBlur = 20 * flash;
+                    // Draw BELOW the "AUTO PILOT" text (Positive Y)
                     ctx.fillText("⚠ LOW ENERGY ⚠", 0, 30 * scale);
                 }
 
@@ -776,7 +862,7 @@
                 STATE.displayedScore += (STATE.score - STATE.displayedScore) * 0.1;
                 // fever depletion i keep losing this
                 if (STATE.feverState > 0) {
-                    let drainRate = (STATE.feverState === 1) ? 2 * dt : 5 * dt;
+                    let drainRate = (STATE.feverState === 1) ? 2 * dt : 3 * dt;
                     STATE.fever -= drainRate;
                     if (STATE.fever <= 0) {
                         STATE.fever = 0; STATE.feverState = 0;
@@ -820,10 +906,10 @@
             document.documentElement.style.setProperty('--bloom-bright', glow);
             document.documentElement.style.setProperty('--bg-dim', dim);
 
-            const pX = -camera.x * 20; const pY = -camera.y * 20;
+            const pX = -camera.x * 20; const pY = camera.y * 20;
             bgVideo.style.transform = `scale(1.1) translate(${pX}px, ${pY}px)`;
 
-            targetCamera.x = mouse.x * 150; targetCamera.y = mouse.y * 150;
+            targetCamera.x = mouse.x * 150; targetCamera.y = -mouse.y * 150;
             camera.x += (targetCamera.x - camera.x) * 0.1; camera.y += (targetCamera.y - camera.y) * 0.1;
 
             const dimSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
@@ -859,7 +945,8 @@
                     }
                     else if (n.type < 2) {
                         if (Math.abs(diff) < 0.15) {
-                            if (Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
+                            const hitRange = (size / 2) + 20; 
+                            if (Math.abs(mouse.realX - p.x) < hitRange && Math.abs(mouse.realY - p.y) < hitRange) {
                                 n.hit = true; doHit(wx, wy, z, color);
                             }
                         } else if (diff < -0.15) {
@@ -937,7 +1024,10 @@
                 ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
                 if (STATE.feverState === 2) { ctx.strokeStyle = 'var(--auto)'; ctx.shadowColor = 'var(--auto)'; }
                 else if (STATE.feverState === 1) { ctx.strokeStyle = 'var(--gold)'; ctx.shadowColor = 'var(--gold)'; }
-                ctx.beginPath(); ctx.arc(mouse.realX, mouse.realY, 12, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+                const size = 40; 
+                ctx.strokeRect(mouse.realX - size / 2, mouse.realY - size / 2, size, size);
+                
+                ctx.shadowBlur = 0;
             }
         }
         resize();

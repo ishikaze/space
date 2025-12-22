@@ -23,7 +23,27 @@
             display: flex;
         }
 
-        /* --- Background Video --- */
+        #input-blocker {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            transition: opacity 0.5s;
+        }
+
+        #input-blocker h1 {
+            font-size: 40px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
         #preview-layer {
             position: absolute;
             top: 0;
@@ -37,7 +57,6 @@
             filter: grayscale(0.5);
         }
 
-        /* --- Layout --- */
         #sidebar {
             width: 450px;
             background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%);
@@ -57,7 +76,7 @@
             flex-direction: column;
             justify-content: flex-end;
             padding: 40px;
-            pointer-events: none; /* Let clicks pass to nowhere unless on button */
+            pointer-events: none;
         }
 
         h1 {
@@ -68,14 +87,13 @@
             margin-bottom: 30px;
         }
 
-        /* --- Chart List --- */
         #chart-list {
             overflow-y: auto;
             flex: 1;
             padding-right: 10px;
         }
 
-        .chart-card {
+        .song-card {
             background: var(--card-bg);
             border-left: 4px solid #444;
             padding: 15px;
@@ -86,7 +104,7 @@
             overflow: hidden;
         }
 
-        .chart-card:hover, .chart-card.active {
+        .song-card:hover, .song-card.active {
             background: rgba(40, 40, 50, 0.9);
             border-left-color: var(--p);
             transform: translateX(10px);
@@ -105,29 +123,23 @@
             margin-bottom: 5px;
         }
 
-        .chart-meta {
+        .diff-badges {
             display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #888;
+            gap: 5px;
             margin-top: 5px;
         }
 
-        .diff-tag {
-            padding: 2px 6px;
-            border-radius: 2px;
-            font-weight: bold;
-            color: #000;
-            font-size: 10px;
-            text-transform: uppercase;
+        .mini-tag {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #111; }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
 
-        /* --- Details Panel (Bottom Right) --- */
         #details-panel {
             pointer-events: auto;
             text-align: right;
@@ -138,6 +150,36 @@
 
         #selected-title { font-size: 60px; font-weight: 900; margin: 0; line-height: 1; text-transform: uppercase;}
         #selected-artist { font-size: 24px; color: var(--p); margin-bottom: 20px; font-weight: 300;}
+
+        #diff-selector {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .diff-btn {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #555;
+            color: #888;
+            padding: 8px 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .diff-btn:hover { background: #333; }
+        
+        .diff-btn.active {
+            background: white;
+            color: black;
+            border-color: white;
+            box-shadow: 0 0 15px white;
+            transform: scale(1.1);
+        }
 
         .stats-grid {
             display: flex;
@@ -150,7 +192,6 @@
         .stat-val { font-size: 24px; font-weight: bold; color: var(--s); display: block;}
         .stat-label { font-size: 12px; color: #ccc; text-transform: uppercase; letter-spacing: 1px;}
 
-        /* --- Settings Panel --- */
         #settings-box {
             background: rgba(0,0,0,0.8);
             border: 1px solid #444;
@@ -161,10 +202,7 @@
             backdrop-filter: blur(20px);
         }
         
-        .setting-row {
-            margin-bottom: 15px;
-        }
-        
+        .setting-row { margin-bottom: 15px; }
         .setting-label {
             display: flex;
             justify-content: space-between;
@@ -173,20 +211,12 @@
             margin-bottom: 5px;
         }
 
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--s);
-        }
-
+        input[type="range"] { width: 100%; accent-color: var(--s); }
         input[type="color"] {
-            background: none;
-            border: 1px solid white;
-            width: 40px;
-            height: 25px;
-            cursor: pointer;
+            background: none; border: 1px solid white;
+            width: 40px; height: 25px; cursor: pointer;
         }
 
-        /* --- Buttons --- */
         .btn-play {
             background: var(--p);
             color: black;
@@ -206,7 +236,6 @@
             box-shadow: 0 0 30px var(--p);
         }
 
-        /* --- Scores --- */
         .score-history {
             margin-top: 10px;
             font-family: monospace;
@@ -220,6 +249,11 @@
 
 <body>
 
+    <div id="input-blocker" onclick="unlockSite()">
+        <h1 style="color:var(--p)">CLICK TO CONTINUE</h1>
+        <p style="color:#aaa; text-transform: uppercase; letter-spacing: 2px;">Enable Audio & Video Preview</p>
+    </div>
+
     <div id="preview-layer">
         <div id="yt-placeholder"></div>
     </div>
@@ -227,7 +261,6 @@
     <div id="sidebar">
         <h1>Select Chart</h1>
         <div id="chart-list">
-            <!-- Items injected via JS -->
         </div>
 
         <div id="settings-box">
@@ -238,7 +271,7 @@
                     <span>Speed Multiplier</span>
                     <span id="speed-val">1.0x</span>
                 </div>
-                <input type="range" id="opt-speed" min="0.1" max="25" step="0.1" value="1.0">
+                <input type="range" id="opt-speed" min="0.1" max="5.0" step="0.1" value="1.0">
             </div>
 
             <div class="setting-row">
@@ -271,6 +304,8 @@
             <h2 id="selected-title">Title</h2>
             <div id="selected-artist">Artist</div>
 
+            <div id="diff-selector"></div>
+
             <div class="stats-grid">
                 <div class="stat-box">
                     <span class="stat-val" id="stat-diff">NORMAL</span>
@@ -294,74 +329,60 @@
         </div>
     </div>
 
+    <script src="./charts.js"></script>
+
     <script>
-        // --- 1. MOCK DATA (In a real app, load this from JSON files) ---
-        // Types: 0=Left(Blue), 1=Right(Pink), 2=Wall(Red)
-        const charts = [
-            {
-                id: "demo_1",
-                title: "Neon Drift",
-                artist: "Synthwave Boy",
-                bpm: 128,
-                offset: 0,
-                youtubeId: "n61ULEU7CO0", // Tokyo Night Drive footage usually
-                notes: generateDummyNotes(128, 60, 2), // 60 seconds of medium density
-                previewTime: 30
-            },
-            {
-                id: "demo_2",
-                title: "Hyper Speed",
-                artist: "Glitch Mob style",
-                bpm: 170,
-                offset: 50,
-                youtubeId: "2XG_0iV2B40", 
-                notes: generateDummyNotes(170, 120, 6), // 120 seconds of high density
-                previewTime: 45
-            },
-            {
-                id: "1",
-                title: "Fading wind",
-                artist: "Feint",
-                bpm: 87,
-                offset: 50,
-                youtubeId: "iUYAY9xYWDY",
-                notes: [{"beat":1,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":1.25,"col":1,"row":1,"type":0,"hit":true,"missed":false},{"beat":1.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":1.75,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":2,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":5,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":5.25,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":5.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":5.75,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":6,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":8,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":7.5,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":2.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":3.5,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":6.75,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":9,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":9.25,"col":1,"row":1,"type":0,"hit":true,"missed":false},{"beat":9.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":9.75,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":10,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":13,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":13.25,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":13.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":13.75,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":14,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":10.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":11.5,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":15,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":15.25,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":15.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":14.5,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":17,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":17.25,"col":1,"row":1,"type":0,"hit":true,"missed":false},{"beat":17.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":17.75,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":18,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":21,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":21.25,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":21.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":21.75,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":22,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":24,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":23.5,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":18.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":19.5,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":22.75,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":25,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":25.25,"col":1,"row":1,"type":0,"hit":true,"missed":false},{"beat":25.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":25.75,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":26,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":29,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":29.25,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":29.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":29.75,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":30,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":26.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":27.5,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":31,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":31.25,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":31.75,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":30.5,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":33,"col":1,"row":1,"type":0,"hit":true,"missed":false},{"beat":33.5,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":34,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":34.5,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":36.5,"col":0,"row":0,"type":0,"hit":true,"missed":false},{"beat":37,"col":0,"row":0,"type":1,"hit":true,"missed":false},{"beat":37.5,"col":2,"row":0,"type":0,"hit":true,"missed":false},{"beat":38,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":39,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":41,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":41.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":42,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":42.5,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":43.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":44,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":44.5,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":45.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":46,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":46.5,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":47,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":48,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":49,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":49.5,"col":2,"row":0,"type":0,"hit":true,"missed":false},{"beat":50,"col":0,"row":0,"type":1,"hit":true,"missed":false},{"beat":50.5,"col":2,"row":1,"type":0,"hit":true,"missed":false},{"beat":51,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":51.25,"col":2,"row":0,"type":0,"hit":true,"missed":false},{"beat":52.5,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":53,"col":0,"row":2,"type":0,"hit":true,"missed":false},{"beat":53.5,"col":2,"row":0,"type":1,"hit":true,"missed":false},{"beat":54,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":55,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":55.5,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":56,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":56.5,"col":0,"row":0,"type":0,"hit":true,"missed":false},{"beat":57.5,"col":2,"row":0,"type":1,"hit":true,"missed":false},{"beat":58.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":59,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":60,"col":0,"row":0,"type":0,"hit":true,"missed":false},{"beat":61,"col":1,"row":1,"type":1,"hit":true,"missed":false},{"beat":62,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":63,"col":0,"row":2,"type":1,"hit":true,"missed":false},{"beat":63.5,"col":0,"row":2,"type":0,"hit":true,"missed":false},{"beat":64,"col":2,"row":1,"type":1,"hit":true,"missed":false},{"beat":64.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":65,"col":1,"row":0,"type":1,"hit":true,"missed":false},{"beat":65.5,"col":1,"row":0,"type":0,"hit":true,"missed":false},{"beat":67,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":67.5,"col":0,"row":0,"type":0,"hit":true,"missed":false},{"beat":68,"col":2,"row":2,"type":1,"hit":true,"missed":false},{"beat":68.5,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":69,"col":2,"row":0,"type":1,"hit":true,"missed":false},{"beat":69.5,"col":2,"row":2,"type":0,"hit":true,"missed":false},{"beat":70,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":70.25,"col":0,"row":1,"type":0,"hit":true,"missed":false},{"beat":71,"col":1,"row":2,"type":1,"hit":true,"missed":false},{"beat":71.25,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":71.5,"col":2,"row":0,"type":1,"hit":true,"missed":false},{"beat":72,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":72.25,"col":0,"row":1,"type":1,"hit":true,"missed":false},{"beat":73,"col":1,"row":2,"type":0,"hit":true,"missed":false},{"beat":74,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":75,"col":1,"row":2,"type":1,"hit":false,"missed":false},{"beat":75.25,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":75.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":76,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":76.25,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":77,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":78,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":79,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":79.5,"col":1,"row":2,"type":1,"hit":false,"missed":false},{"beat":80,"col":2,"row":1,"type":0,"hit":false,"missed":false},{"beat":80.5,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":81,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":81.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":83,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":83.5,"col":1,"row":2,"type":1,"hit":false,"missed":false},{"beat":84,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":84.5,"col":1,"row":2,"type":1,"hit":false,"missed":false},{"beat":85,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":85.5,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":86,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":86.25,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":87.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":88,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":88.25,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":89,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":90,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":92,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":92.25,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":93,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":87,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":91,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":91.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":94,"col":0,"row":0,"type":0,"hit":false,"missed":false},{"beat":94.5,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":95,"col":1,"row":0,"type":0,"hit":false,"missed":false},{"beat":95.25,"col":0,"row":2,"type":1,"hit":false,"missed":false},{"beat":95.5,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":95.75,"col":0,"row":2,"type":1,"hit":false,"missed":false},{"beat":96,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":96.25,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":96.75,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":96.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":96.625,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":97.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":97.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":98,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":97,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":98.25,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":99,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":99.5,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":99.75,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":100,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":100.25,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":101,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":101.25,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":101.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":102,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":102.25,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":102.5,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":103,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":103.5,"col":2,"row":1,"type":1,"hit":false,"missed":false},{"beat":103.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":104,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":104.25,"col":1,"row":0,"type":0,"hit":false,"missed":false},{"beat":104.75,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":104.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":104.625,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":105.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":105.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":106,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":105,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":106.25,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":107,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":107.5,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":107.75,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":108,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":108.25,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":109,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":109.25,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":109.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":110,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":110.25,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":110.5,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":111,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":111.5,"col":2,"row":1,"type":1,"hit":false,"missed":false},{"beat":111.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":112,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":112.25,"col":1,"row":0,"type":0,"hit":false,"missed":false},{"beat":112.75,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":112.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":112.625,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":113.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":113.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":114,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":113,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":114.25,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":115,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":115.5,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":115.75,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":116,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":116.25,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":117,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":117.25,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":117.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":118,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":118.25,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":118.5,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":119,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":119.5,"col":2,"row":1,"type":1,"hit":false,"missed":false},{"beat":119.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":120,"col":0,"row":1,"type":1,"hit":false,"missed":false},{"beat":120.25,"col":1,"row":0,"type":0,"hit":false,"missed":false},{"beat":120.75,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":120.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":120.625,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":121.5,"col":2,"row":0,"type":1,"hit":false,"missed":false},{"beat":121.75,"col":1,"row":2,"type":0,"hit":false,"missed":false},{"beat":122,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":121,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":122.25,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":123,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":123.5,"col":2,"row":2,"type":0,"hit":false,"missed":false},{"beat":123.75,"col":0,"row":0,"type":1,"hit":false,"missed":false},{"beat":124,"col":2,"row":0,"type":0,"hit":false,"missed":false},{"beat":124.25,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":125,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":125.25,"col":2,"row":2,"type":1,"hit":false,"missed":false},{"beat":125.5,"col":1,"row":1,"type":0,"hit":false,"missed":false},{"beat":126,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":126.25,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":126.5,"col":1,"row":1,"type":1,"hit":false,"missed":false},{"beat":127,"col":0,"row":2,"type":0,"hit":false,"missed":false},{"beat":127.5,"col":0,"row":2,"type":1,"hit":false,"missed":false},{"beat":128,"col":2,"row":1,"type":0,"hit":false,"missed":false}],"events":[{"beat":0,"type":"speed","value":1},{"beat":0,"type":"bg-dim","value":0.5},{"beat":0,"type":"playfield-op","value":1},{"beat":0,"type":"bloom-blur","value":0},{"beat":0,"type":"bloom-bright","value":1}]
-            }
-        ];
-
-        // Helper to make dummy notes for testing
-        function generateDummyNotes(bpm, durationSec, density) {
-            const arr = [];
-            const totalBeats = (bpm / 60) * durationSec;
-            for (let i = 4; i < totalBeats; i += (4/density)) {
-                if(Math.random() > 0.8) continue; // add gaps
-                const type = Math.random() > 0.9 ? 2 : (Math.random() > 0.5 ? 1 : 0);
-                // Simple pattern generation
-                let row = 1 + Math.floor(Math.random()*3); // 1, 2, 3
-                let col = 1 + Math.floor(Math.random()*3);
-                arr.push({ beat: i, col: col, row: row, type: type });
-            }
-            return arr;
-        }
-
-        // --- 2. LOGIC ---
-
-        let selectedChartIndex = -1;
         let ytPlayer = null;
         let fadeInterval = null;
+        let currentVideoId = null; 
+        let interactionAllowed = false;
+        
+        let groupedCharts = {};
+        let selectedYoutubeId = null; 
+        let selectedVariantIndex = 0; 
 
-        // Settings References
         const sSpeed = document.getElementById('opt-speed');
         const sDist = document.getElementById('opt-dist');
         const sC1 = document.getElementById('opt-c1');
         const sC2 = document.getElementById('opt-c2');
         const sC3 = document.getElementById('opt-c3');
 
-        // Update Labels on input
-        sSpeed.addEventListener('input', (e) => document.getElementById('speed-val').innerText = e.target.value + "x");
-        sDist.addEventListener('input', (e) => document.getElementById('dist-val').innerText = e.target.value);
+        if(localStorage.getItem('opt-speed')) {
+            sSpeed.value = localStorage.getItem('opt-speed');
+            document.getElementById('speed-val').innerText = sSpeed.value + "x";
+        }
+        if(localStorage.getItem('opt-dist')) {
+            sDist.value = localStorage.getItem('opt-dist');
+            document.getElementById('dist-val').innerText = sDist.value;
+        }
+        if(localStorage.getItem('opt-c1')) sC1.value = localStorage.getItem('opt-c1');
+        if(localStorage.getItem('opt-c2')) sC2.value = localStorage.getItem('opt-c2');
+        if(localStorage.getItem('opt-c3')) sC3.value = localStorage.getItem('opt-c3');
 
-        // Load Youtube API
+        sSpeed.addEventListener('input', (e) => {
+            document.getElementById('speed-val').innerText = e.target.value + "x";
+            localStorage.setItem('opt-speed', e.target.value);
+        });
+        
+        sDist.addEventListener('input', (e) => {
+            document.getElementById('dist-val').innerText = e.target.value;
+            localStorage.setItem('opt-dist', e.target.value);
+        });
+
+        sC1.addEventListener('input', (e) => localStorage.setItem('opt-c1', e.target.value));
+        sC2.addEventListener('input', (e) => localStorage.setItem('opt-c2', e.target.value));
+        sC3.addEventListener('input', (e) => localStorage.setItem('opt-c3', e.target.value));
+
+        function unlockSite() {
+            interactionAllowed = true;
+            document.getElementById('input-blocker').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('input-blocker').style.display = 'none';
+            }, 500);
+            
+            if(!ytPlayer && window.YT) onYouTubeIframeAPIReady();
+        }
+
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -369,84 +390,166 @@
 
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('yt-placeholder', {
-                height: '100%', width: '100%',
-                playerVars: { 'autoplay': 0, 'controls': 0, 'showinfo': 0, 'mute': 1 },
+                height: '100%', 
+                width: '100%',
+                playerVars: { 
+                    'autoplay': 0, 
+                    'controls': 0, 
+                    'showinfo': 0, 
+                    'mute': 1, 
+                    'loop': 1,
+                    'origin': window.location.origin 
+                },
                 events: {
-                    'onReady': () => { console.log("YT Ready"); }
+                    'onReady': () => { }
                 }
             });
         }
 
         function calculateDifficulty(chart) {
-            // Logic: Density (Notes per Second) + Duration factor
             const lastNote = chart.notes[chart.notes.length-1].beat;
             const duration = lastNote * (60 / chart.bpm);
             const count = chart.notes.length;
             const nps = count / duration;
 
-            // Base calculation
             let rating = nps * 1.5; 
-            // Length penalty (stamina)
             if(duration > 120) rating *= 1.1;
-            if(duration > 240) rating *= 1.2;
 
-            let label = "NORMAL";
+            let label = "Unrated";
             let color = "#78b7ff";
 
-            if(rating < 2) { label = "EASY"; color = "#00ffcc"; }
-            else if(rating < 4) { label = "NORMAL"; color = "#78b7ff"; }
-            else if(rating < 7) { label = "HARD"; color = "#ffd700"; }
-            else if(rating < 10) { label = "EXPERT"; color = "#ff96d3"; }
-            else { label = "MASTER"; color = "#ff4444"; }
+            if(rating < 2) { label = "Relaxed"; color = "#00ffcc"; }
+            else if(rating < 4) { label = "Casual"; color = "#78b7ff"; }
+            else if(rating < 7) { label = "Hard"; color = "#ffd700"; }
+            else if(rating < 10) { label = "Expert"; color = "#ff4444"; }
+            else { label = "Lunatic"; color = "#c68cff"; }
 
             return { val: rating.toFixed(1), label, color, duration, count };
         }
 
+        function processGroups() {
+            groupedCharts = {};
+            charts.forEach(c => {
+                const vid = c.youtubeId;
+                if(!groupedCharts[vid]) groupedCharts[vid] = [];
+                groupedCharts[vid].push(c);
+            });
+
+            for(let vid in groupedCharts) {
+                groupedCharts[vid].sort((a,b) => a.notes.length - b.notes.length);
+            }
+        }
+
         function renderList() {
+            processGroups();
             const container = document.getElementById('chart-list');
             container.innerHTML = "";
 
-            charts.forEach((chart, index) => {
-                const diff = calculateDifficulty(chart);
+            Object.keys(groupedCharts).forEach(vid => {
+                const group = groupedCharts[vid];
+                const baseChart = group[0]; 
                 
                 const card = document.createElement('div');
-                card.className = 'chart-card';
-                card.onclick = () => selectChart(index);
-                card.onmouseenter = () => hoverChart(index);
-                card.onmouseleave = () => stopPreview();
+                card.className = 'song-card';
+                card.dataset.vid = vid;
+                
+                card.onclick = () => selectSongGroup(vid);
+                card.onmouseenter = () => hoverSong(vid);
 
-                // Mock Score History
-                const savedScore = localStorage.getItem(`score_${chart.id}`) || "No Play";
+                let badgesHTML = "";
+                group.forEach(gChart => {
+                    const d = calculateDifficulty(gChart);
+                    badgesHTML += `<span class="mini-tag" style="background:${d.color}" title="${d.label}"></span>`;
+                });
 
                 card.innerHTML = `
-                    <span class="chart-title">${chart.title}</span>
-                    <div class="chart-artist">${chart.artist}</div>
-                    <div class="chart-meta">
-                        <span class="diff-tag" style="background:${diff.color}">${diff.label}</span>
-                        <span>BPM: ${chart.bpm}</span>
-                        <span>${Math.floor(diff.duration/60)}:${Math.floor(diff.duration%60).toString().padStart(2,'0')}</span>
-                    </div>
-                    <div class="score-history">Best: ${savedScore}</div>
+                    <span class="chart-title">${baseChart.title}</span>
+                    <div class="chart-artist">${baseChart.artist}</div>
+                    <div class="diff-badges">${badgesHTML}</div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function selectChart(index) {
-            selectedChartIndex = index;
-            const chart = charts[index];
-            const diff = calculateDifficulty(chart);
+        function hoverSong(vid) {
+            if(!interactionAllowed || !ytPlayer || !ytPlayer.loadVideoById) return;
+            if(currentVideoId === vid) return; 
 
-            // Highlight in UI
-            document.querySelectorAll('.chart-card').forEach((c, i) => {
-                c.style.borderLeftColor = (i === index) ? 'var(--p)' : '#444';
-                c.style.background = (i === index) ? 'rgba(60,60,70,0.9)' : '';
+            currentVideoId = vid;
+            const group = groupedCharts[vid];
+            const baseChart = group[0];
+            
+            const lastNoteBeat = baseChart.notes[baseChart.notes.length-1].beat;
+            const duration = lastNoteBeat * (60/baseChart.bpm);
+            const startT = baseChart.previewTime || (duration * 0.25);
+
+            ytPlayer.setVolume(0);
+            ytPlayer.loadVideoById(baseChart.youtubeId, startT);
+            
+            clearInterval(fadeInterval);
+            let vol = 0;
+            fadeInterval = setInterval(() => {
+                vol += 2; 
+                if(vol >= 50) {
+                    vol = 50;
+                    ytPlayer.setVolume(vol);
+                    clearInterval(fadeInterval);
+                } else {
+                    ytPlayer.setVolume(vol);
+                }
+            }, 50);
+
+            document.getElementById('preview-layer').style.opacity = 1.0;
+        }
+
+        function selectSongGroup(vid) {
+            selectedYoutubeId = vid;
+            selectedVariantIndex = 0;
+            
+            document.querySelectorAll('.song-card').forEach(c => {
+                if(c.dataset.vid === vid) {
+                    c.style.borderLeftColor = 'var(--p)';
+                    c.style.background = 'rgba(60,60,70,0.9)';
+                } else {
+                    c.style.borderLeftColor = '#444';
+                    c.style.background = '';
+                }
             });
 
-            // Update Details
+            hoverSong(vid);
+            updateDetailsPanel();
+        }
+
+        function updateDetailsPanel() {
+            const group = groupedCharts[selectedYoutubeId];
+            const chart = group[selectedVariantIndex];
+            
             document.getElementById('details-panel').style.display = 'block';
             document.getElementById('selected-title').innerText = chart.title;
             document.getElementById('selected-artist').innerText = chart.artist;
+
+            const diffContainer = document.getElementById('diff-selector');
+            diffContainer.innerHTML = "";
+            
+            group.forEach((v, idx) => {
+                const d = calculateDifficulty(v);
+                const btn = document.createElement('button');
+                btn.className = 'diff-btn';
+                if(idx === selectedVariantIndex) {
+                    btn.classList.add('active');
+                    btn.style.color = d.color;
+                    btn.style.borderColor = d.color;
+                    btn.style.boxShadow = `0 0 10px ${d.color}`;
+                }
+                btn.innerText = d.label;
+                btn.onclick = () => {
+                    selectedVariantIndex = idx;
+                    updateDetailsPanel(); 
+                };
+                diffContainer.appendChild(btn);
+            });
+
+            const diff = calculateDifficulty(chart);
             document.getElementById('stat-notes').innerText = diff.count;
             document.getElementById('stat-bpm').innerText = chart.bpm;
             
@@ -455,91 +558,25 @@
             diffEl.style.color = diff.color;
             
             const score = localStorage.getItem(`score_${chart.id}`);
-            document.getElementById('stat-score').innerText = score ? "S" : "-"; // Placeholder logic
-        }
-
-        function hoverChart(index) {
-            if(!ytPlayer || !ytPlayer.loadVideoById) return;
-            const chart = charts[index];
-            
-            // Calculate 25% timestamp or use defined previewTime
-            const lastNoteBeat = chart.notes[chart.notes.length-1].beat;
-            const duration = lastNoteBeat * (60/chart.bpm);
-            const startT = chart.previewTime || (duration * 0.25);
-
-            ytPlayer.loadVideoById(chart.youtubeId, startT);
-            ytPlayer.setVolume(0);
-            
-            // Smooth fade in
-            clearInterval(fadeInterval);
-            let vol = 0;
-            fadeInterval = setInterval(() => {
-                vol += 5;
-                if(vol >= 50) clearInterval(fadeInterval);
-                ytPlayer.setVolume(vol);
-            }, 100);
-
-            document.getElementById('preview-layer').style.opacity = 1.0;
-        }
-
-        function stopPreview() {
-            // Optional: You might want to keep playing the selected chart,
-            // but for now let's just dim it or pause it.
-            // For a cool menu, usually we keep it playing if selected, 
-            // but since we separate selection and hover, let's just fade out.
-            
-            if(!ytPlayer) return;
-            
-            clearInterval(fadeInterval);
-            ytPlayer.pauseVideo();
-            document.getElementById('preview-layer').style.opacity = 0.3;
+            document.getElementById('stat-score').innerText = score ? "S" : "-";
         }
 
         function launchGame() {
-            if(selectedChartIndex === -1) return;
+            if(!selectedYoutubeId) return;
 
-            const baseChart = charts[selectedChartIndex];
-            
-            // We need to inject the settings into the chart object or a separate config
-            // Since the Player Client code reads 'selectedChart', we will modify the chart object
-            // to include our settings, BUT the player needs to know how to read them.
-            // *Fix*: The prompt's player has hardcoded CONFIG. 
-            // To make this work without changing player code logic too much, 
-            // we will overwrite specific keys if the player supported it, 
-            // OR we rely on the player code in the previous prompt being editable.
-            
-            // Assuming we are just saving data for the provided Player Client:
-            // We will modify the note colors in the source array? No, that's complex.
-            // We will attach an 'overrides' object.
+            const group = groupedCharts[selectedYoutubeId];
+            const baseChart = group[selectedVariantIndex];
             
             const finalData = {
                 ...baseChart,
-                // Inject settings into the JSON. 
-                // The provided Player Client uses CONFIG.colors and CONFIG.approachDistance.
-                // We'll add a specific key 'clientConfig' that a modified player could read,
-                // OR we accept that the standard player won't read these unless updated.
-                // However, the prompt asks to "add settings for..." implies functional settings.
-                
-                // HACK: We can't change the player code in the prompt, but we can pass the data.
-                // If you use the chart in the player, you should add:
-                // `if(data.settings) { Object.assign(CONFIG, data.settings); }`
                 settings: {
-                    colors: [sC1.value, sC2.value, sC3.value], // Left, Right, Wall
+                    colors: [sC1.value, sC2.value, sC3.value], 
                     approachDistance: parseInt(sDist.value),
-                    speedMultiplier: parseFloat(sSpeed.value) // Player uses baseSpeed, we'll need to multiply
+                    speedMultiplier: parseFloat(sSpeed.value)
                 }
             };
-            
-            // To make the speed setting work with the *existing* player logic:
-            // The player calculates visual distance based on speed events. 
-            // It has `STATE.baseSpeed`. We can try to modify the event values or baseSpeed logic.
-            // The easiest way for the user is if we modify the Player Client to check `data.settings`.
 
             localStorage.setItem('selectedChart', JSON.stringify(finalData));
-            
-            // Navigate to player
-            // Assuming player is in same directory named 'player.html'
-            // or we just document.write the player code (not recommended).
             window.location.href = './player'; 
         }
 

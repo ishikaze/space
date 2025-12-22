@@ -112,7 +112,6 @@
             background: transparent; color: white; border: 2px solid rgba(255,255,255,0.2);
             padding: 12px 40px; font-size: 16px; font-weight: bold; text-transform: uppercase;
             cursor: pointer; transition: 0.2s;
-            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
         }
         .btn:hover { background: white; color: black; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
         .btn-primary { border-color: var(--s); color: var(--s); }
@@ -157,7 +156,7 @@
                 <span id="combo-val" class="stat-value">0</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">Perfect Hits</span>
+                <span class="stat-label">Hits</span>
                 <span id="hits-val" class="stat-value" style="color:var(--s)">0</span>
             </div>
             <div class="stat-row">
@@ -168,8 +167,8 @@
 
         <!-- Buttons -->
         <div class="actions">
-            <button class="btn" onclick="location.href='index.html'">Select Song</button>
-            <button class="btn btn-primary" onclick="location.href='player.html'">Retry</button>
+            <button class="btn" onclick="location.href='../'">Select Song</button>
+            <button class="btn btn-primary" onclick="location.href='../player'">Retry</button>
         </div>
     </div>
 
@@ -283,7 +282,7 @@
                 }, 200);
 
                 // Wait 1 second AFTER video starts playing, then animate
-                setTimeout(triggerAnimations, 1000);
+                setTimeout(triggerAnimations, 350);
             }
         }
 
