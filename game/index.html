@@ -409,8 +409,8 @@
             ytPlayer.setVolume(0);
             fadeInterval = setInterval(() => {
                 vol += 2; 
-                if(vol >= 50) {
-                    vol = 50;
+                if(vol >= 100) {
+                    vol = 100;
                     clearInterval(fadeInterval);
                 }
                 ytPlayer.setVolume(vol);

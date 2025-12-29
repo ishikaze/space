@@ -11,6 +11,16 @@ const charts = [
         previewTime: 0
     },
     {
+        id: "demo_1",
+        title: "Fading wind (Unfinished demo)",
+        artist: "Feint",
+        bpm: 87,
+        offset: 50,
+        youtubeId: "iUYAY9xYWDY", // Tokyo Night Drive footage usually
+        notes: generateDummyNotes(87, 60, 7), // 60 seconds of medium density
+        previewTime: 30
+    },
+    {
         id: "2",
         title: "Simple folds (Unfinished demo)",
         artist: "Pretty patterns",
