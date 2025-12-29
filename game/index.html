@@ -388,22 +388,33 @@
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+        // Add this to your onYouTubeIframeAPIReady events
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('yt-placeholder', {
-                height: '100%', 
-                width: '100%',
-                playerVars: { 
-                    'autoplay': 0, 
-                    'controls': 0, 
-                    'showinfo': 0, 
-                    'mute': 1, 
-                    'loop': 1,
-                    'origin': window.location.origin 
-                },
+                height: '100%', width: '100%',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'mute': 0, 'origin': window.location.origin },
                 events: {
-                    'onReady': () => { }
+                    'onStateChange': (event) => {
+                        if (event.data === 1) { // YT.PlayerState.PLAYING
+                            startFadeIn();
+                        }
+                    }
                 }
             });
+        }
+
+        function startFadeIn() {
+            clearInterval(fadeInterval);
+            let vol = 0;
+            ytPlayer.setVolume(0);
+            fadeInterval = setInterval(() => {
+                vol += 2; 
+                if(vol >= 50) {
+                    vol = 50;
+                    clearInterval(fadeInterval);
+                }
+                ytPlayer.setVolume(vol);
+            }, 50);
         }
 
         function calculateDifficulty(chart) {
@@ -453,8 +464,9 @@
                 card.className = 'song-card';
                 card.dataset.vid = vid;
                 
+                // Both clicking and hovering now do the exact same thing: Select
                 card.onclick = () => selectSongGroup(vid);
-                card.onmouseenter = () => hoverSong(vid);
+                card.onmouseenter = () => selectSongGroup(vid);
 
                 let badgesHTML = "";
                 group.forEach(gChart => {
@@ -471,6 +483,13 @@
             });
         }
 
+        function onPlayerStateChange(event) {
+            // 1 is the code for "Playing"
+            if (event.data === 1) { 
+                startFadeIn();
+            }
+        }
+
         function hoverSong(vid) {
             if(!interactionAllowed || !ytPlayer || !ytPlayer.loadVideoById) return;
             if(currentVideoId === vid) return; 
@@ -483,41 +502,56 @@
             const duration = lastNoteBeat * (60/baseChart.bpm);
             const startT = baseChart.previewTime || (duration * 0.25);
 
-            ytPlayer.setVolume(0);
-            ytPlayer.loadVideoById(baseChart.youtubeId, startT);
-            
+            // Stop any current fading and silent the player immediately
             clearInterval(fadeInterval);
-            let vol = 0;
-            fadeInterval = setInterval(() => {
-                vol += 2; 
-                if(vol >= 50) {
-                    vol = 50;
-                    ytPlayer.setVolume(vol);
-                    clearInterval(fadeInterval);
-                } else {
-                    ytPlayer.setVolume(vol);
-                }
-            }, 50);
+            ytPlayer.setVolume(0);
+            
+            // Load the video. This will eventually trigger 'onStateChange'
+            ytPlayer.loadVideoById(baseChart.youtubeId, startT);
 
             document.getElementById('preview-layer').style.opacity = 1.0;
         }
 
         function selectSongGroup(vid) {
+            // 1. Prevent redundant loading if already selected
+            if(selectedYoutubeId === vid) return; 
+
             selectedYoutubeId = vid;
-            selectedVariantIndex = 0;
+            currentVideoId = vid; // Keep these in sync
+            selectedVariantIndex = 0; // Reset to easiest/first diff on new song
             
+            // 2. Update UI Highlighting
             document.querySelectorAll('.song-card').forEach(c => {
                 if(c.dataset.vid === vid) {
+                    c.classList.add('active');
                     c.style.borderLeftColor = 'var(--p)';
                     c.style.background = 'rgba(60,60,70,0.9)';
                 } else {
+                    c.classList.remove('active');
                     c.style.borderLeftColor = '#444';
                     c.style.background = '';
                 }
             });
 
-            hoverSong(vid);
+            // 3. Update the Right-Side Panel
             updateDetailsPanel();
+
+            // 4. Handle Music Preview
+            if(interactionAllowed && ytPlayer && ytPlayer.loadVideoById) {
+                const group = groupedCharts[vid];
+                const baseChart = group[0];
+                
+                const lastNoteBeat = baseChart.notes[baseChart.notes.length-1].beat;
+                const duration = lastNoteBeat * (60/baseChart.bpm);
+                const startT = baseChart.previewTime || (duration * 0.25);
+
+                // Reset volume immediately to prevent "old song" bleed
+                clearInterval(fadeInterval);
+                ytPlayer.setVolume(0);
+                ytPlayer.loadVideoById(vid, startT);
+                
+                document.getElementById('preview-layer').style.opacity = 1.0;
+            }
         }
 
         function updateDetailsPanel() {

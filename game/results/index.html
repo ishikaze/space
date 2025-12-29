@@ -270,10 +270,7 @@
         }
 
         function onPlayerStateChange(event) {
-            // Check if playing (State 1) and animations haven't started
             if (event.data === YT.PlayerState.PLAYING && !animationsTriggered) {
-                
-                // Fade in volume
                 let vol = 80;
                 const fade = setInterval(() => {
                     if(vol >= 80) clearInterval(fade);
@@ -281,7 +278,6 @@
                     event.target.setVolume(vol);
                 }, 200);
 
-                // Wait 1 second AFTER video starts playing, then animate
                 setTimeout(triggerAnimations, 350);
             }
         }
