@@ -128,7 +128,8 @@
             border-radius: 8px;
             color: white;
             font-size: 16px;
-            display: none; /* Hidden by default, shown in JS during game */
+            display: none;
+            /* Hidden by default, shown in JS during game */
             justify-content: center;
             align-items: center;
             pointer-events: auto;
@@ -232,6 +233,12 @@
 </head>
 
 <body>
+    <div id="splash-screen"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:2000; display:flex; justify-content:center; align-items:center; cursor:pointer;">
+        <h1
+            style="color:var(--s); text-transform:uppercase; letter-spacing:5px; text-shadow:0 0 20px var(--s); font-size:40px;">
+            Click to Start</h1>
+    </div>
 
     <div id="video-placeholder"></div>
 
@@ -286,15 +293,15 @@
             gridDim: 3, gridSpacing: 100, fov: 350, approachDistance: 8000, hitZ: 50,
             hitZ: 0,
             cameraZ: 250,
-            colors: ['#78b7ff', '#ff96d3', '#ff4444'], 
-            startBuffer: 3.0 
+            colors: ['#78b7ff', '#ff96d3', '#ff4444'],
+            startBuffer: 3.0
         };
 
         const STATE = {
-            status: 'LOADING', 
+            status: 'LOADING',
             offset: 0, baseSpeed: 2500,
             currentTime: 0, duration: 0,
-            score: 0, displayedScore: 0, 
+            score: 0, displayedScore: 0,
             combo: 0, maxCombo: 0, hits: 0, misses: 0,
 
             lastNoteBeat: 0,
@@ -313,7 +320,7 @@
 
         let mapData = [];
         let gameEvents = [];
-        let bpmEvents = [{ beat: 0, bpm: 128, time: 0 }]; 
+        let bpmEvents = [{ beat: 0, bpm: 128, time: 0 }];
         let ytPlayer; let ytReady = false;
 
         const canvas = document.getElementById('gameCanvas');
@@ -358,11 +365,11 @@
             if (bpmEvents.length === 0 || bpmEvents[0].beat !== 0) {
                 bpmEvents.unshift({ beat: 0, bpm: 128, time: 0 });
             }
-            bpmEvents[0].time = 0; 
+            bpmEvents[0].time = 0;
 
             for (let i = 0; i < bpmEvents.length - 1; i++) {
                 const curr = bpmEvents[i];
-                const next = bpmEvents[i+1];
+                const next = bpmEvents[i + 1];
                 const beatsDiff = next.beat - curr.beat;
                 const secondsDiff = beatsDiff * (60 / curr.bpm);
                 next.time = curr.time + secondsDiff;
@@ -380,22 +387,27 @@
         }
 
         function checkLocalStorageLoad() {
+            const splash = document.getElementById('splash-screen');
             const statusDiv = document.getElementById('loading-status');
             const storedChart = localStorage.getItem('selectedChart');
+            splash.addEventListener('click', () => {
+                splash.style.display = 'none';
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            if (storedChart) {
-                try {
-                    const data = JSON.parse(storedChart);
-                    loadMapData(data);
-                    statusDiv.style.display = 'none';
-                    startGame()
-                } catch (e) {
-                    console.error("LS Load Failed", e);
+                if (storedChart) {
+                    try {
+                        const data = JSON.parse(storedChart);
+                        loadMapData(data);
+                        statusDiv.style.display = 'none';
+                        startGame();
+                    } catch (e) {
+                        console.error("LS Load Failed", e);
+                        promptManualLoad();
+                    }
+                } else {
                     promptManualLoad();
                 }
-            } else {
-                promptManualLoad();
-            }
+            }, { once: true });
         }
 
         function promptManualLoad() {
@@ -428,7 +440,7 @@
             }
             updateBPMCache();
 
-            STATE.offset = (data.offset || 0) + 75; 
+            STATE.offset = (data.offset || 0) + 75;
             mapData = data.notes.map(n => ({ ...n, hit: false, missed: false }));
 
             STATE.lastNoteBeat = 0;
@@ -454,7 +466,7 @@
                 ytPlayer.loadVideoById(data.youtubeId);
                 ytPlayer.pauseVideo();
             }
-            
+
             if (data.settings) {
                 if (data.settings.colors) CONFIG.colors = data.settings.colors;
                 if (data.settings.approachDistance) CONFIG.approachDistance = data.settings.approachDistance;
@@ -463,7 +475,7 @@
                 }
             }
         }
-    
+
 
         function startGame() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -478,10 +490,10 @@
             mapData.forEach(n => { n.hit = false; n.missed = false; });
 
             resize();
-            
+
             // Try pointer lock, but don't crash if it fails (Mobile)
-            try { canvas.requestPointerLock(); } catch(e){}
-            
+            try { canvas.requestPointerLock(); } catch (e) { }
+
             pauseBtn.style.display = 'flex'; // Show mobile pause button
 
             mouse.realX = canvas.width / 2; mouse.realY = canvas.height / 2;
@@ -497,7 +509,7 @@
         function resumeGame() {
             if (STATE.status !== 'PAUSED') return;
             document.body.classList.remove('game-paused');
-            try { canvas.requestPointerLock(); } catch(e){}
+            try { canvas.requestPointerLock(); } catch (e) { }
             STATE.status = 'PLAYING';
             document.getElementById('menu-pause').style.display = 'none';
             pauseBtn.style.display = 'flex'; // Show mobile pause button
@@ -513,7 +525,7 @@
             STATE.status = 'PAUSED';
             document.exitPointerLock();
             if (ytReady) ytPlayer.pauseVideo();
-            
+
             pauseBtn.style.display = 'none'; // Hide mobile pause button (menu covers it)
 
             document.body.classList.add('game-paused');
@@ -567,20 +579,20 @@
                 // On PC this pauses, on mobile we ignore this because lock isn't supported
                 // Check if user is on mobile by checking touch capability roughly
                 const isTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
-                if(!isTouch) pauseGame();
+                if (!isTouch) pauseGame();
             }
         });
 
         // --- NEW MOBILE TOUCH HANDLERS ---
-        canvas.addEventListener('touchstart', handleTouch, {passive: false});
-        canvas.addEventListener('touchmove', handleTouch, {passive: false});
+        canvas.addEventListener('touchstart', handleTouch, { passive: false });
+        canvas.addEventListener('touchmove', handleTouch, { passive: false });
 
         function handleTouch(e) {
             e.preventDefault(); // Stop scrolling
             if (STATE.status !== 'PLAYING') return;
 
             const touch = e.touches[0];
-            
+
             // Map touch position directly to game cursor (1:1 control)
             mouse.realX = touch.clientX;
             mouse.realY = touch.clientY;
@@ -608,8 +620,8 @@
                 mouse.realX += e.movementX;
                 mouse.realY += e.movementY;
 
-                const cursorSize = 40; 
-                const pad = cursorSize / 2; 
+                const cursorSize = 40;
+                const pad = cursorSize / 2;
 
                 if (mouse.realX < minX + pad) mouse.realX = minX + pad;
                 if (mouse.realX > maxX - pad) mouse.realX = maxX - pad;
@@ -736,14 +748,14 @@
             }
         }
 
-function drawHUD() {
+        function drawHUD() {
             const boxHalf = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
             const z = CONFIG.hitZ;
             const pTopLeft = project(-boxHalf, boxHalf, z, camera.x, camera.y);
-            
+
             // Visual Bottom Center Edge (0, -y)
             const pBotCenter = project(0, -boxHalf, z, camera.x, camera.y);
-            
+
             const scale = pTopLeft.scale;
 
             // --- SCORE (Top Left) ---
@@ -798,16 +810,16 @@ function drawHUD() {
             }
 
             // --- AUTO/SPACE TEXT (Bottom Center) ---
-            
+
             if (STATE.feverState === 1) {
                 const alpha = Math.abs(Math.sin(Date.now() / 200));
                 ctx.save();
                 // Move DOWN outwards from the bottom edge
-                ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale)); 
+                ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale));
                 ctx.font = `bold ${20 * scale}px "Segoe UI"`;
                 ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
                 ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
-                ctx.textAlign = 'center'; 
+                ctx.textAlign = 'center';
                 ctx.textBaseline = 'top'; // Draw downwards from the anchor
                 ctx.fillText("[ SPACE TO AUTO ] ", 0, 0);
                 ctx.restore();
@@ -821,12 +833,12 @@ function drawHUD() {
                 ctx.font = `900 ${24 * scale}px "Segoe UI"`;
                 ctx.fillStyle = `#00ffcc`;
                 ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 20;
-                ctx.textAlign = 'center'; 
-                ctx.textBaseline = 'top'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
                 ctx.fillText("AUTO PILOT", 0, 0);
 
                 if (STATE.fever < 25) {
-                    const flash = (Math.sin(Date.now() / 100) + 1) / 2; 
+                    const flash = (Math.sin(Date.now() / 100) + 1) / 2;
                     ctx.font = `900 ${20 * scale}px "Segoe UI"`;
                     ctx.fillStyle = `rgba(255, 0, 0, ${flash})`;
                     ctx.shadowColor = 'red'; ctx.shadowBlur = 20 * flash;
@@ -845,7 +857,7 @@ function drawHUD() {
             viewShake.y = (Math.random() - 0.5) * camera.shake;
 
             camera.recoil *= 0.5; if (camera.recoil < 0.5) camera.recoil = 0;
-            camera.shake *= 0.5;  if (camera.shake < 0.5) camera.shake = 0;
+            camera.shake *= 0.5; if (camera.shake < 0.5) camera.shake = 0;
 
             let dt = 1 / 60;
             if (STATE.status === 'PLAYING') {
@@ -945,7 +957,7 @@ function drawHUD() {
                     }
                     else if (n.type < 2) {
                         if (Math.abs(diff) < 0.15) {
-                            const hitRange = (size / 2) + 20; 
+                            const hitRange = (size / 2) + 20;
                             if (Math.abs(mouse.realX - p.x) < hitRange && Math.abs(mouse.realY - p.y) < hitRange) {
                                 n.hit = true; doHit(wx, wy, z, color);
                             }
@@ -1024,9 +1036,9 @@ function drawHUD() {
                 ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
                 if (STATE.feverState === 2) { ctx.strokeStyle = 'var(--auto)'; ctx.shadowColor = 'var(--auto)'; }
                 else if (STATE.feverState === 1) { ctx.strokeStyle = 'var(--gold)'; ctx.shadowColor = 'var(--gold)'; }
-                const size = 40; 
+                const size = 40;
                 ctx.strokeRect(mouse.realX - size / 2, mouse.realY - size / 2, size, size);
-                
+
                 ctx.shadowBlur = 0;
             }
         }
