@@ -7,6 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>player client v7(16) Mobile</title>
     <style>
+        @font-face {
+        font-family: 'twos'; /* Choose a name */
+        src: url('../../assets/fonts/Two\ Slice.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        }
+
+        @font-face {
+        font-family: '3x3'; /* Choose a name */
+        src: url('../../assets/fonts/3x3.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        }
+
         :root {
             --p: #ff96d3;
             --s: #78b7ff;
@@ -301,9 +315,9 @@
             isFading: false,
             fadeStartTime: 0,
 
-            fever: 0,
+            fever: 30,
             feverMax: 30,
-            feverState: 0,
+            feverState: 2,
         };
 
         const UI_ANIM = {
@@ -471,7 +485,7 @@
             STATE.status = 'PLAYING';
             STATE.score = 0; STATE.displayedScore = 0;
             STATE.combo = 0; STATE.maxCombo = 0; STATE.hits = 0; STATE.misses = 0;
-            STATE.fever = 0; STATE.feverState = 0;
+            STATE.fever = 30; STATE.feverState = 0;
             STATE.isFading = false;
 
             document.querySelectorAll('.menu-box').forEach(el => el.style.display = 'none');
@@ -554,10 +568,10 @@
                 else if (STATE.status === 'PAUSED') resumeGame();
             }
             if (e.code === 'Space' && STATE.status === 'PLAYING') {
-                if (STATE.feverState === 1) {
+                if (STATE.feverState === 0) {
                     activateAutoMode();
                 } else if (STATE.feverState === 2) {
-                    STATE.feverState = 1;
+                    STATE.feverState = 0;
                 }
             }
         });
@@ -704,8 +718,8 @@
         }
 
         function doHit(x, y, z, c) {
-            camera.recoil = Math.min(camera.recoil + 20, 100);
-            camera.shake = Math.min(camera.shake + 5, 10);
+            camera.recoil = Math.min(camera.recoil + 50, 150);
+            camera.shake = Math.min(camera.shake + 7, 15);
 
             STATE.hits++;
             STATE.combo++;
@@ -717,7 +731,7 @@
 
             if (STATE.feverState !== 2) {
                 if (STATE.fever < STATE.feverMax) {
-                    STATE.fever++;
+                    STATE.fever = 30;
                     if (STATE.fever >= STATE.feverMax && STATE.feverState === 0) {
                         STATE.feverState = 1;
                     }
@@ -732,7 +746,7 @@
             STATE.misses++;
             STATE.combo = 0;
             if (STATE.feverState !== 2) {
-                STATE.fever = Math.max(0, STATE.fever - 10);
+                STATE.fever = Math.max(0, STATE.fever - 0);
             }
         }
 
@@ -749,10 +763,11 @@ function drawHUD() {
             // --- SCORE (Top Left) ---
             ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom'; // Draw upwards from the anchor point
-            ctx.font = `bold ${30 * scale}px "Segoe UI"`;
+            ctx.font = `bold ${30 * scale}px "3x3"`;
+            ctx.letterSpacing = '-2px';
             ctx.shadowBlur = 10; ctx.shadowColor = 'var(--s)'; ctx.fillStyle = 'white';
             // Draw slightly above the corner
-            ctx.fillText(Math.floor(STATE.displayedScore).toLocaleString(), pTopLeft.x, pTopLeft.y - (10 * scale));
+            ctx.fillText(Math.floor(STATE.displayedScore), pTopLeft.x, pTopLeft.y - (10 * scale));
 
             // --- COMBO (Right Side) ---
             const pRight = project(boxHalf, 0, z, camera.x, camera.y);
@@ -776,11 +791,11 @@ function drawHUD() {
 
             ctx.textAlign = 'center';
             ctx.fillStyle = color; ctx.textBaseline = 'middle';
-            ctx.font = `900 ${24 * scale * UI_ANIM.comboScale}px "Segoe UI"`;
+            ctx.font = `900 ${24 * scale * UI_ANIM.comboScale}px "3x3"`;
             ctx.shadowBlur = 0;
             ctx.fillText(STATE.combo, 0, 0);
 
-            ctx.font = `bold ${12 * scale}px "Segoe UI"`;
+            ctx.font = `bold ${12 * scale}px "3x3"`;
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
             ctx.fillText("COMBO", 0, 20 * scale);
             ctx.restore();
@@ -790,7 +805,7 @@ function drawHUD() {
                 const pLeft = project(-boxHalf, 0, z, camera.x, camera.y);
                 ctx.save();
                 ctx.translate(pLeft.x - (60 * scale), pLeft.y);
-                ctx.font = `900 ${40 * scale}px "Segoe UI"`;
+                ctx.font = `900 ${40 * scale}px "3x3"`;
                 ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText("2x", 0, 0);
@@ -804,7 +819,7 @@ function drawHUD() {
                 ctx.save();
                 // Move DOWN outwards from the bottom edge
                 ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale)); 
-                ctx.font = `bold ${20 * scale}px "Segoe UI"`;
+                ctx.font = `bold ${20 * scale}px "3x3"`;
                 ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
                 ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
                 ctx.textAlign = 'center'; 
@@ -818,7 +833,7 @@ function drawHUD() {
                 // Move DOWN outwards
                 ctx.translate(pBotCenter.x, pBotCenter.y + (30 * scale));
 
-                ctx.font = `900 ${24 * scale}px "Segoe UI"`;
+                ctx.font = `900 ${24 * scale}px "3x3"`;
                 ctx.fillStyle = `#00ffcc`;
                 ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 20;
                 ctx.textAlign = 'center'; 
@@ -827,7 +842,7 @@ function drawHUD() {
 
                 if (STATE.fever < 25) {
                     const flash = (Math.sin(Date.now() / 100) + 1) / 2; 
-                    ctx.font = `900 ${20 * scale}px "Segoe UI"`;
+                    ctx.font = `900 ${20 * scale}px "3x3"`;
                     ctx.fillStyle = `rgba(255, 0, 0, ${flash})`;
                     ctx.shadowColor = 'red'; ctx.shadowBlur = 20 * flash;
                     // Draw BELOW the "AUTO PILOT" text (Positive Y)
@@ -839,197 +854,226 @@ function drawHUD() {
         }
 
         function loop() {
-            requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
 
-            viewShake.x = (Math.random() - 0.5) * camera.shake;
-            viewShake.y = (Math.random() - 0.5) * camera.shake;
+        viewShake.x = (Math.random() - 0.5) * camera.shake;
+        viewShake.y = (Math.random() - 0.5) * camera.shake;
 
-            camera.recoil *= 0.5; if (camera.recoil < 0.5) camera.recoil = 0;
-            camera.shake *= 0.5;  if (camera.shake < 0.5) camera.shake = 0;
+        camera.recoil *= 0.5; if (camera.recoil < 0.5) camera.recoil = 0;
+        camera.shake *= 0.5; if (camera.shake < 0.5) camera.shake = 0;
 
-            let dt = 1 / 60;
-            if (STATE.status === 'PLAYING') {
-                if (STATE.currentTime < 0) {
-                    STATE.currentTime += dt;
-                    const cdVal = Math.ceil(Math.abs(STATE.currentTime));
-                    const cdEl = document.getElementById('countdown');
-                    cdEl.style.display = 'block'; cdEl.innerText = cdVal;
-                    if (STATE.currentTime >= 0) { STATE.currentTime = 0; cdEl.style.display = 'none'; if (ytReady) ytPlayer.playVideo(); }
-                } else if (ytReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                    STATE.currentTime = ytPlayer.getCurrentTime();
-                }
+        let dt = 1 / 60;
+        if (STATE.status === 'PLAYING') {
+            if (STATE.currentTime < 0) {
+                STATE.currentTime += dt;
+                const cdVal = Math.ceil(Math.abs(STATE.currentTime));
+                const cdEl = document.getElementById('countdown');
+                cdEl.style.display = 'block'; cdEl.innerText = cdVal;
+                if (STATE.currentTime >= 0) { STATE.currentTime = 0; cdEl.style.display = 'none'; if (ytReady) ytPlayer.playVideo(); }
+            } else if (ytReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                STATE.currentTime = ytPlayer.getCurrentTime();
+            }
 
-                STATE.displayedScore += (STATE.score - STATE.displayedScore) * 0.1;
-                // fever depletion i keep losing this
-                if (STATE.feverState > 0) {
-                    let drainRate = (STATE.feverState === 1) ? 2 * dt : 3 * dt;
-                    STATE.fever -= drainRate;
-                    if (STATE.fever <= 0) {
-                        STATE.fever = 0; STATE.feverState = 0;
-                    }
-                }
-
-                UI_ANIM.comboScale += (1.0 - UI_ANIM.comboScale) * 0.1;
-
-                let tempTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
-                let curBeatLogic = timeToBeat(tempTime);
-
-                if (!STATE.isFading && curBeatLogic > STATE.lastNoteBeat + 4) {
-                    STATE.isFading = true;
-                    STATE.fadeStartTime = Date.now();
-                }
-
-                if (STATE.isFading) {
-                    const elapsed = (Date.now() - STATE.fadeStartTime) / 5000;
-                    if (elapsed >= 1.0) finishGame();
-                    else {
-                        const volume = 100 * (1.0 - elapsed);
-                        if (ytReady) ytPlayer.setVolume(volume);
-                        canvas.style.opacity = (1.0 - elapsed);
-                    }
+            STATE.displayedScore += (STATE.score - STATE.displayedScore) * 0.1;
+            
+            if (STATE.feverState > 0) {
+                let drainRate = (STATE.feverState === 1) ? 2 * dt : 0 * dt;
+                STATE.fever -= drainRate;
+                if (STATE.fever <= 0) {
+                    STATE.fever = 0; STATE.feverState = 0;
                 }
             }
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            UI_ANIM.comboScale += (1.0 - UI_ANIM.comboScale) * 0.1;
 
-            let effectiveTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
-            let curBeat = timeToBeat(effectiveTime);
+            let tempTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
+            let curBeatLogic = timeToBeat(tempTime);
 
-            const blur = getInterpolatedValue(curBeat, 'bloom-blur');
-            const glow = getInterpolatedValue(curBeat, 'bloom-bright');
-            const dim = getInterpolatedValue(curBeat, 'bg-dim');
-            let op = getInterpolatedValue(curBeat, 'playfield-op');
-            if (STATE.isFading) op = canvas.style.opacity;
-            else document.documentElement.style.setProperty('--playfield-op', op);
-
-            document.documentElement.style.setProperty('--bloom-blur', blur + "px");
-            document.documentElement.style.setProperty('--bloom-bright', glow);
-            document.documentElement.style.setProperty('--bg-dim', dim);
-
-            const pX = -camera.x * 20; const pY = camera.y * 20;
-            bgVideo.style.transform = `scale(1.1) translate(${pX}px, ${pY}px)`;
-
-            targetCamera.x = mouse.x * 150; targetCamera.y = -mouse.y * 150;
-            camera.x += (targetCamera.x - camera.x) * 0.1; camera.y += (targetCamera.y - camera.y) * 0.1;
-
-            const dimSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
-            const pts = [[-dimSize, -dimSize], [dimSize, -dimSize], [-dimSize, dimSize], [dimSize, dimSize]];
-            ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.beginPath();
-            pts.forEach(p => {
-                const p1 = project(p[0], p[1], 0, camera.x, camera.y); const p2 = project(p[0], p[1], 2000, camera.x, camera.y);
-                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-            }); ctx.stroke();
-
-            const visible = mapData.filter(n => n.beat > curBeat - 4 && n.beat < curBeat + 32).sort((a, b) => b.beat - a.beat);
-            let autoTarget = null;
-
-            visible.forEach(n => {
-                const dist = getVisualDistance(curBeat, n.beat);
-
-                if (dist < -1000 || dist > CONFIG.approachDistance) return;
-
-                const z = CONFIG.hitZ + dist;
-                const wx = (n.col - 1) * CONFIG.gridSpacing, wy = -(n.row - 1) * CONFIG.gridSpacing;
-                const p = project(wx, wy, z, camera.x, camera.y);
-                const size = CONFIG.gridSpacing * p.scale;
-                const color = CONFIG.colors[n.type];
-
-                if (STATE.status === 'PLAYING' && !n.hit && !n.missed) {
-                    const diff = n.beat - curBeat;
-                    //fever modes
-                    if (STATE.feverState === 2 && n.type < 2) {
-                        if (diff < 1.0 && diff > -0.1) {
-                            if (!autoTarget || diff < autoTarget.diff) autoTarget = { x: p.x, y: p.y, diff: diff };
-                        }
-                        if (Math.abs(diff) < 0.05) { n.hit = true; doHit(wx, wy, z, color); }
-                    }
-                    else if (n.type < 2) {
-                        if (Math.abs(diff) < 0.15) {
-                            const hitRange = (size / 2) + 20; 
-                            if (Math.abs(mouse.realX - p.x) < hitRange && Math.abs(mouse.realY - p.y) < hitRange) {
-                                n.hit = true; doHit(wx, wy, z, color);
-                            }
-                        } else if (diff < -0.15) {
-                            n.missed = true;
-                            handleMiss();
-                        }
-                    }
-                    else if (n.type === 2) {
-                        let wallHit = false;
-                        if (STATE.feverState !== 2) {
-                            if (Math.abs(diff) < 0.1 && Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
-                                n.hit = true;
-                                wallHit = true;
-                                STATE.misses++; STATE.combo = 0;
-                                STATE.fever = Math.max(0, STATE.fever - 20);
-                                playFailSound();
-                                document.getElementById('flash-overlay').style.opacity = 0.2;
-                                setTimeout(() => document.getElementById('flash-overlay').style.opacity = 0, 100);
-                            }
-                        }
-                        if (!wallHit && diff < -0.1) {
-                            n.missed = true;
-                        }
-                    }
-                }
-
-                if (!n.hit) {
-                    if (n.type < 2 && n.beat > curBeat && n.beat < curBeat + 4) {
-                        const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
-                        const aScale = 1 + ((n.beat - curBeat) * 2.5);
-                        const os = CONFIG.gridSpacing * dest.scale * aScale;
-                        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, 1 - (n.beat - curBeat) / 4);
-                        ctx.strokeRect(dest.x - os / 2, dest.y - os / 2, os, os); ctx.globalAlpha = 1;
-                    }
-                    ctx.save(); ctx.translate(p.x, p.y);
-                    const alpha = Math.min(1, z / 300 + 0.3);
-                    ctx.shadowBlur = 15; ctx.shadowColor = color;
-                    if (n.type === 2) {
-                        ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size * 0.05);
-                        ctx.strokeRect(-size / 2, -size / 2, size, size);
-                        ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(size / 2, size / 2); ctx.moveTo(size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.stroke();
-                        ctx.fillStyle = color; ctx.globalAlpha = alpha * 0.2; ctx.fillRect(-size / 2, -size / 2, size, size);
-                    } else {
-                        ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, size * 0.12);
-                        ctx.strokeRect(-size / 2, -size / 2, size, size);
-                        ctx.globalAlpha = alpha * 0.15; ctx.fillStyle = color; ctx.fillRect(-size / 2, -size / 2, size, size);
-                    }
-                    ctx.restore();
-                }
-            });
-
-            if (STATE.feverState === 2 && autoTarget) {
-                mouse.realX += (autoTarget.x - mouse.realX) * 0.5;
-                mouse.realY += (autoTarget.y - mouse.realY) * 0.5;
-                mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
-                mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
+            if (!STATE.isFading && curBeatLogic > STATE.lastNoteBeat + 4) {
+                STATE.isFading = true;
+                STATE.fadeStartTime = Date.now();
             }
 
-            const hp = project(0, 0, CONFIG.hitZ, camera.x, camera.y);
-            const hpSize = (CONFIG.gridDim * CONFIG.gridSpacing) * hp.scale;
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2;
-            ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
-
-            if (STATE.status === 'PLAYING') drawHUD();
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.z += p.vz; p.life -= 0.04;
-                if (p.life <= 0) { particles.splice(i, 1); continue; }
-                const pr = project(p.x, p.y, p.z, camera.x, camera.y);
-                ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.fillRect(pr.x, pr.y, 6 * pr.scale, 6 * pr.scale);
-            } ctx.globalAlpha = 1;
-
-            if (STATE.status === 'PLAYING') {
-                ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-                if (STATE.feverState === 2) { ctx.strokeStyle = 'var(--auto)'; ctx.shadowColor = 'var(--auto)'; }
-                else if (STATE.feverState === 1) { ctx.strokeStyle = 'var(--gold)'; ctx.shadowColor = 'var(--gold)'; }
-                const size = 40; 
-                ctx.strokeRect(mouse.realX - size / 2, mouse.realY - size / 2, size, size);
-                
-                ctx.shadowBlur = 0;
+            if (STATE.isFading) {
+                const elapsed = (Date.now() - STATE.fadeStartTime) / 5000;
+                if (elapsed >= 1.0) finishGame();
+                else {
+                    const volume = 100 * (1.0 - elapsed);
+                    if (ytReady) ytPlayer.setVolume(volume);
+                    canvas.style.opacity = (1.0 - elapsed);
+                }
             }
         }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let effectiveTime = Math.max(0, STATE.currentTime - (STATE.offset / 1000));
+        let curBeat = timeToBeat(effectiveTime);
+
+        const blur = getInterpolatedValue(curBeat, 'bloom-blur');
+        const glow = getInterpolatedValue(curBeat, 'bloom-bright');
+        const dim = getInterpolatedValue(curBeat, 'bg-dim');
+        let op = getInterpolatedValue(curBeat, 'playfield-op');
+        if (STATE.isFading) op = canvas.style.opacity;
+        else document.documentElement.style.setProperty('--playfield-op', op);
+
+        document.documentElement.style.setProperty('--bloom-blur', blur + "px");
+        document.documentElement.style.setProperty('--bloom-bright', glow);
+        document.documentElement.style.setProperty('--bg-dim', dim);
+
+        const pX = -camera.x * 20; const pY = camera.y * 20;
+        bgVideo.style.transform = `scale(1.1) translate(${pX}px, ${pY}px)`;
+
+        targetCamera.x = mouse.x * 150; targetCamera.y = -mouse.y * 150;
+        camera.x += (targetCamera.x - camera.x) * 0.1; camera.y += (targetCamera.y - camera.y) * 0.1;
+
+        const dimSize = (CONFIG.gridDim * CONFIG.gridSpacing) / 2;
+        const pts = [[-dimSize, -dimSize], [dimSize, -dimSize], [-dimSize, dimSize], [dimSize, dimSize]];
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1; ctx.beginPath();
+        pts.forEach(p => {
+            const p1 = project(p[0], p[1], 0, camera.x, camera.y); const p2 = project(p[0], p[1], 2000, camera.x, camera.y);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        }); ctx.stroke();
+
+        const visible = mapData.filter(n => n.beat > curBeat - 4 && n.beat < curBeat + 32).sort((a, b) => b.beat - a.beat);
+        
+        // --- IMPROVED AUTO PILOT VARIABLE ---
+        let closestAutoCandidate = null; 
+        // ------------------------------------
+
+        visible.forEach(n => {
+            const dist = getVisualDistance(curBeat, n.beat);
+
+            if (dist < -1000 || dist > CONFIG.approachDistance) return;
+
+            const z = CONFIG.hitZ + dist;
+            const wx = (n.col - 1) * CONFIG.gridSpacing, wy = -(n.row - 1) * CONFIG.gridSpacing;
+            const p = project(wx, wy, z, camera.x, camera.y);
+            const size = CONFIG.gridSpacing * p.scale;
+            const color = CONFIG.colors[n.type];
+
+            if (STATE.status === 'PLAYING' && !n.hit && !n.missed) {
+                const diff = n.beat - curBeat;
+                const absDiff = Math.abs(diff);
+
+                // --- IMPROVED AUTO PILOT LOGIC ---
+                if (STATE.feverState === 2 && n.type < 2) {
+                    
+                    // 1. Precise Hit Execution
+                    if (absDiff <= 0.06) { // Slightly wider window for safety
+                        n.hit = true;
+                        // Force visual snap to note immediately (removes lag)
+                        mouse.realX = p.x; 
+                        mouse.realY = p.y;
+                        doHit(wx, wy, z, color);
+                    } 
+                    // 2. Find closest FUTURE note to target
+                    else if (diff > 0 && diff < 2.0) {
+                        // If we don't have a candidate, or this note is closer in time than the previous candidate
+                        if (!closestAutoCandidate || diff < closestAutoCandidate.diff) {
+                            closestAutoCandidate = { x: p.x, y: p.y, diff: diff };
+                        }
+                    }
+                }
+                // ---------------------------------
+                
+                // Manual Play Logic
+                else if (n.type < 2) {
+                    if (absDiff < 0.15) {
+                        const hitRange = (size / 2) + 20;
+                        if (Math.abs(mouse.realX - p.x) < hitRange && Math.abs(mouse.realY - p.y) < hitRange) {
+                            n.hit = true; doHit(wx, wy, z, color);
+                        }
+                    } else if (diff < -0.15) {
+                        n.missed = true;
+                        handleMiss();
+                    }
+                }
+                else if (n.type === 2) {
+                    let wallHit = false;
+                    if (STATE.feverState !== 2) {
+                        if (Math.abs(diff) < 0.1 && Math.abs(mouse.realX - p.x) < size / 2 && Math.abs(mouse.realY - p.y) < size / 2) {
+                            n.hit = true;
+                            wallHit = true;
+                            STATE.misses++; STATE.combo = 0;
+                            STATE.fever = Math.max(0, STATE.fever - 20);
+                            playFailSound();
+                            document.getElementById('flash-overlay').style.opacity = 0.2;
+                            setTimeout(() => document.getElementById('flash-overlay').style.opacity = 0, 100);
+                        }
+                    }
+                    if (!wallHit && diff < -0.1) {
+                        n.missed = true;
+                    }
+                }
+            }
+
+            // Draw Note
+            if (!n.hit) {
+                if (n.type < 2 && n.beat > curBeat && n.beat < curBeat + 4) {
+                    const dest = project(wx, wy, CONFIG.hitZ, camera.x, camera.y);
+                    const aScale = 1 + ((n.beat - curBeat) * 2.5);
+                    const os = CONFIG.gridSpacing * dest.scale * aScale;
+                    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, 1 - (n.beat - curBeat) / 4);
+                    ctx.strokeRect(dest.x - os / 2, dest.y - os / 2, os, os); ctx.globalAlpha = 1;
+                }
+                ctx.save(); ctx.translate(p.x, p.y);
+                const alpha = Math.min(1, z / 300 + 0.3);
+                ctx.shadowBlur = 15; ctx.shadowColor = color;
+                if (n.type === 2) {
+                    ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size * 0.05);
+                    ctx.strokeRect(-size / 2, -size / 2, size, size);
+                    ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(size / 2, size / 2); ctx.moveTo(size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.stroke();
+                    ctx.fillStyle = color; ctx.globalAlpha = alpha * 0.2; ctx.fillRect(-size / 2, -size / 2, size, size);
+                } else {
+                    ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, size * 0.12);
+                    ctx.strokeRect(-size / 2, -size / 2, size, size);
+                    ctx.globalAlpha = alpha * 0.15; ctx.fillStyle = color; ctx.fillRect(-size / 2, -size / 2, size, size);
+                }
+                ctx.restore();
+            }
+        });
+
+        // --- IMPROVED MOVEMENT SMOOTHING ---
+        if (STATE.feverState === 2 && closestAutoCandidate) {
+            // Speed factor: 1.0 (Instant) if very close, 0.5 (Smooth) if far away
+            // This ensures we snap to the note right before hitting it
+            const speed = closestAutoCandidate.diff < 0.15 ? 0.8 : 0.4;
+            
+            mouse.realX += (closestAutoCandidate.x - mouse.realX) * speed;
+            mouse.realY += (closestAutoCandidate.y - mouse.realY) * speed;
+            
+            // Recalculate normalized mouse coordinates for camera parallax
+            mouse.x = (mouse.realX - canvas.width / 2) / (canvas.width / 2);
+            mouse.y = (mouse.realY - canvas.height / 2) / (canvas.height / 2);
+        }
+        // -----------------------------------
+
+        const hp = project(0, 0, CONFIG.hitZ, camera.x, camera.y);
+        const hpSize = (CONFIG.gridDim * CONFIG.gridSpacing) * hp.scale;
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2;
+        ctx.strokeRect(hp.x - hpSize / 2, hp.y - hpSize / 2, hpSize, hpSize);
+
+        if (STATE.status === 'PLAYING') drawHUD();
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy; p.z += p.vz; p.life -= 0.04;
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
+            const pr = project(p.x, p.y, p.z, camera.x, camera.y);
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.fillRect(pr.x, pr.y, 6 * pr.scale, 6 * pr.scale);
+        } ctx.globalAlpha = 1;
+
+        if (STATE.status === 'PLAYING') {
+            ctx.shadowBlur = 10; ctx.shadowColor = 'white'; ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+            if (STATE.feverState === 2) { ctx.strokeStyle = 'var(--auto)'; ctx.shadowColor = 'var(--auto)'; }
+            else if (STATE.feverState === 1) { ctx.strokeStyle = 'var(--gold)'; ctx.shadowColor = 'var(--gold)'; }
+            const size = 40; 
+            ctx.strokeRect(mouse.realX - size / 2, mouse.realY - size / 2, size, size);
+            
+            ctx.shadowBlur = 0;
+        }
+    }
         resize();
         loop();
 
