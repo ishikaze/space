@@ -13,6 +13,7 @@ let timeOverride = localStorage.getItem("timeOverride");
 let lastCheckedTimeOfDay;
 let logEnabled = false;
 let currentLyricsCleanup = null;
+let maxVolume = 50;
 
 function setTimeOverride(override) {
     switch (override) {
@@ -82,8 +83,11 @@ function shuffleQueue(array) {
 let timeOfDay;
 function getNewTrack() {
     let useTrackList = tracks.default;
-    if (month === 1 && day >= 15 && day <= 30) {
+    if (month === 2 && day >= 1 && day <= 15) {
         useTrackList = tracks.lunarNewYear;
+        maxVolume = 50;
+        document.getElementById('main-container').style.animation = 'lunarNewYear 20s linear infinite';
+        document.getElementById('bloom').style.opacity = '0.25';
     }
 
     log(`time is ${hour}:${minute}, month is ${month}, day is ${day}`);
@@ -396,7 +400,7 @@ function newSong() {
 async function trackFadeIn() {
     player.volume = 0
     log(`track fading in`)
-    for (let i = 0; i <= 50; i++) {
+    for (let i = 0; i <= maxVolume; i++) {
         player.volume = i / 100
         await sleep(35)
     }

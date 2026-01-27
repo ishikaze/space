@@ -175,6 +175,20 @@ i {
   }
 }
 
+@keyframes lunarNewYear {
+  0% {
+    filter: hue-rotate(190deg) saturate(0.75) saturate(2);
+  }
+
+  50% {
+    filter: hue-rotate(190deg) saturate(0.75) saturate(1.5);
+  }
+
+  100% {
+    filter: hue-rotate(190deg) saturate(0.75) saturate(2);
+  }
+}
+
 #main-container {
   position: relative;
   background-color: #060b18;
@@ -182,6 +196,18 @@ i {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+#bloom {
+  position: fixed;
+  background-color: #00000000;
+  backdrop-filter: blur(10px);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
 }
 
 #canvas{

@@ -327,62 +327,146 @@ const tracks = {
     lunarNewYear: {
         earlyMorning: [
             {
-                name: "name1",
-                url: "./assets/music/morning/track1.mp3"
+                name: "Celestial River",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/celestialRiver.mp3",
+                startTimestamp: 0
             },
             {
-                name: "name2",
-                url: "./assets/music/morning/track2.mp3"
+                name: "Wish of Abundance",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfAbundance.mp3",
+                startTimestamp: 3
             }
         ],
         morning: [
             {
-                name: "name1",
-                url: "./assets/music/morning/track1.mp3"
+                name: "Wish of Abundance",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfAbundance.mp3",
+                startTimestamp: 3
             },
             {
-                name: "name2",
-                url: "./assets/music/morning/track2.mp3"
+                name: "Wish of Harmony",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfHarmony.mp3",
+                startTimestamp: 20
             }
         ],
         afternoon: [
             {
-                name: "name1",
-                url: "./assets/music/afternoon/track1.mp3"
+                name: "Heavenly Wish",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/heavenlyWish.mp3",
+                startTimestamp: 60
             },
             {
-                name: "name2",
-                url: "./assets/music/afternoon/track2.mp3"
+                name: "Wish of Order",
+                artist: "Honor of Kings and Henrik Lindström",
+                url: "./assets/music/LunarNewYear/wishOfOrder.mp3",
+                startTimestamp: 152.7
+            },
+            {
+                name: "Wish of Serenity",
+                artist: "Honor of Kings and Henrik Lindström",
+                url: "./assets/music/LunarNewYear/wishOfSerenity.mp3",
+                startTimestamp: 125
             }
         ],
         evening: [
             {
-                name: "name1",
-                url: "./assets/music/evening/track1.mp3"
+                name: "Wish of Eternity",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfEternity.mp3",
+                startTimestamp: 140
             },
             {
-                name: "name2",
-                url: "./assets/music/evening/track2.mp3"
+                name: "Wish of Fortune",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfFortune.mp3",
+                startTimestamp: 146.5
             }
         ],
         night: [
             {
-                name: "name1",
-                url: "./assets/music/night/track1.mp3"
+                name: "Celestial River",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/celestialRiver.mp3",
+                startTimestamp: 0
             },
             {
-                name: "name2",
-                url: "./assets/music/night/track2.mp3"
+                name: "Wish of Abundance",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfAbundance.mp3",
+                startTimestamp: 3
+            },
+            {
+                name: "Wish of Harmony",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfHarmony.mp3",
+                startTimestamp: 20
+            },
+            {
+                name: "Wish of Eternity",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfEternity.mp3",
+                startTimestamp: 140
+            },
+            {
+                name: "Wish of Fortune",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfFortune.mp3",
+                startTimestamp: 146.5
             }
         ],
         lateNight: [
             {
-                name: "name1",
-                url: "./assets/music/lateNight/track1.mp3"
+                name: "Celestial River",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/celestialRiver.mp3",
+                startTimestamp: 0
             },
             {
-                name: "name2",
-                url: "./assets/music/lateNight/track2.mp3"
+                name: "Wish of Abundance",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfAbundance.mp3",
+                startTimestamp: 3
+            },
+            {
+                name: "Wish of Harmony",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfHarmony.mp3",
+                startTimestamp: 21
+            },
+            {
+                name: "Wish of Eternity",
+                artist: "Honor of Kings and Laurent Courbier",
+                url: "./assets/music/LunarNewYear/wishOfEternity.mp3",
+                startTimestamp: 140
+            },
+            {
+                name: "Wish of Fortune",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/wishOfFortune.mp3",
+                startTimestamp: 146.5
+            },
+            {
+                name: "Heavenly Wish",
+                artist: "Honor of Kings and Matthew Carl Earl",
+                url: "./assets/music/LunarNewYear/heavenlyWish.mp3",
+                startTimestamp: 60
+            },
+            {
+                name: "Wish of Order",
+                artist: "Honor of Kings and Henrik Lindström",
+                url: "./assets/music/LunarNewYear/wishOfOrder.mp3",
+                startTimestamp: 152.7
+            },
+            {
+                name: "Wish of Serenity",
+                artist: "Honor of Kings and Henrik Lindström",
+                url: "./assets/music/LunarNewYear/wishOfSerenity.mp3",
+                startTimestamp: 125
             }
         ]
     }

@@ -22,6 +22,14 @@ const updates = [
             <li>Huge mobile update</li>
         </ul>
         `
+    },
+    {
+        version: '1.02',
+        description: `Sorry about that! <br> <br>
+        <ul>
+            the site was down for a week or so because of some placeholder code, it is now fixed!
+        </ul>
+        `
     }
 ]
 
