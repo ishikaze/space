@@ -30,6 +30,24 @@ const updates = [
             the site was down for a week or so because of some placeholder code, it is now fixed!
         </ul>
         `
+    },
+    {
+        version: '777',
+        description: `the chat will be up until firebase decides to shut it down, it will not be maintained anymore.
+        `
+    },
+    {
+        version: '888',
+        description: `I am no longer working on this site. <br> <br>
+        hi, everyone. due to my rapidly declining mental and physical health, i'm going off the internet for a while. i may or may not come back, but its goodbye for now. <br>
+        thank you for all everyone has done for me and for anythinbg i do. i truly appreciate all of the support. <br>
+        i'm sorry for the sudden annoumcement. <br> <br>
+        cheerish the people around you, and tell them you love them. <br>
+        you never know when it could be the last time you see them. <br> <br>
+        i love you all. <br> <br>
+        i hope you all have a great life, and i hope to see you again. <br> <br>
+        bye now.
+        `
     }
 ]
 

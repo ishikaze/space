@@ -472,8 +472,10 @@ function playLyrics(url) {
         if (lyricsContainer) {
             const line1 = lyricsContainer.querySelector('#line-1');
             const line2 = lyricsContainer.querySelector('#line-2');
-            if (line1) line1.textContent = '';
-            if (line2) line2.textContent = '';
+            if (line1) 
+                line1.textContent = '';
+            if (line2) 
+                line2.textContent = '';
         }
         currentLyricsCleanup = null;
         console.log("No lyrics available for this track.");

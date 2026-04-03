@@ -86,10 +86,10 @@ function handleConsoleCommand(cmd) {
         case '?':
             if (!cmd.trim().toLowerCase().split(' ')[1]) {
                 logToConsole('List of commands:')
-                logToConsole('clear - Clears the console log');
-                logToConsole('skiploading/skip - Skips the loading screen entirely');
-                logToConsole('version/ver [reset] - Displays or resets the app version');
-                logToConsole('timeOverride [timeOfDay] - Overrides the time');
+                logToConsole('clear                          - Clears the console log');
+                logToConsole('skiploading/skip               - Skips the loading screen entirely');
+                logToConsole('version/ver [reset]            - Displays or resets the app version');
+                logToConsole('timeOverride [timeOfDay]       - Overrides the time');
                 logToConsole();
                 logToConsole('use help/? <command> for more info on a specific command')
                 logToConsole('arguments in <> are required, arguments in [] are optional');
@@ -153,6 +153,15 @@ function handleConsoleCommand(cmd) {
                 logToConsole('version reset. refresh to apply.');
             }
             
+            break;
+        case 'debug':
+            if (debugPanel.style.display === 'block') {
+                logToConsole('Debug mode disabled.');
+                debugPanel.style.display = 'none';
+            } else {
+                logToConsole('Debug mode enabled.');
+                debugPanel.style.display = 'block';
+            }
             break;
         default:
             logToConsole(`Unknown command: "${cmd}"`);
