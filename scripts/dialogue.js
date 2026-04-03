@@ -90,8 +90,6 @@ async function playDialogue(id) {
             await sleep(3000)
         }
 
-        updateDialogue("I'm still working on this site")
-        await sleep(5000)
         updateDialogue("So, what's up?")
         await sleep(2000)
         showSelections()
